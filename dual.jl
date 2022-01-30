@@ -4,12 +4,15 @@ include("h.jl")
   
 function duale(instance::String)
     # #Reading data
-    # println("Error")
-     n,s,t,S,d1,d2,p,ph,d,grandD = read("instances/$instance")
-    
-
-    # #model creation
-     m=Model(CPLEX.Optimizer)
+    include("instances/$instance")
+    d = Array{Float64,2}(zeros(n,n)) 
+    grandD = Array{Float64,2}(zeros(n,n))
+    for i in 1:size(Mat,1)
+        d[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,3]
+        grandD[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,4]
+    end
+    #model creation
+    m=Model(CPLEX.Optimizer)
     # #variables
     @variable(m, x[1:n , 1:n], Bin)
     @variable(m, beta[1:n , 1:n], Bin)

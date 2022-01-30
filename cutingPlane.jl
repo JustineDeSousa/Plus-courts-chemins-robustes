@@ -2,7 +2,13 @@ using JuMP
 using CPLEX
 include("h.jl")  
 function cuttingPlane(instance::String)
-    n,s,t,S,d1,d2,p,ph,d,grandD = read("instances/$instance")
+    include("instances/$instance")
+    d = Array{Float64,2}(zeros(n,n)) 
+    grandD = Array{Float64,2}(zeros(n,n))
+    for i in 1:size(Mat,1)
+        d[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,3]
+        grandD[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,4]
+    end
     #Master problem creation
     mp=Model(CPLEX.Optimizer)
     set_silent(mp)
@@ -77,44 +83,6 @@ function cuttingPlane(instance::String)
     return z_aux
 
 end
-function slaveProblem_o(n::Int64,grandD::Array{Float64,2},d::Array{Float64,2},d1::Int64,x_aux::Array{Int64,2})
-    sp_o=Model(CPLEX.Optimizer)
-    set_silent(sp_o)
-    #variables
-    @variable(sp_o, delta1[1:n,1:n]>=0)
-    #constraints
-    @constraint(sp_o, sum(delta1[i,j] for i in 1:n, j in 1:n if d[i,j]!=0) <= d1 )
-    @constraint(sp_o, [i in 1:n, j in 1:n],delta1[i,j]<=grandD[i,j])
-    #objective function
-    @objective(sp_o, Max, sum(d[i,j]*(1+delta1[i,j])*x_aux[i,j] for i in 1:n, j in 1:n))
-    #solve
-    optimize!(sp_o)
-    delta1_aux=Array{Float64,2}(zeros(n,n))
-    for i in 1:n
-        for j in 1:n
-            delta1_aux[i,j]=JuMP.value(delta1[i,j])
-        end
-    end
-    objective_spo=JuMP.objective_value(sp_o)
-    return delta1_aux, objective_spo
-end
-function slaveProblem_1(n::Int64,p::Array{Int64,1},ph::Array{Int64,1},d2::Int64,y_aux::Array{Int64,1})
-    sp_1=Model(CPLEX.Optimizer)
-    set_silent(sp_1)
-    #variables
-    @variable(sp_1, 0<=delta2[1:n]<=2)
-    #constraints
-    @constraint(sp_1, sum(delta2[i] for i in 1:n) <= d2 )
-    #objective function
-    @objective(sp_1, Max, sum((p[i]+delta2[i]*ph[i])*y_aux[i] for i in 1:n))
-    #solve
-    optimize!(sp_1)
-    delta2_aux=Array{Int64,1}(zeros(n))
-    for i in 1:n
-        delta2_aux[i]=JuMP.value(delta2[i])
-    end
-    objective_sp1=JuMP.objective_value(sp_1)
-    return delta2_aux, objective_sp1
-end
+
 instance="20_USA-road-d.BAY.gr"
 cuttingPlane(instance)
