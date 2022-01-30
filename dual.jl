@@ -35,7 +35,7 @@ function duale(instance::String)
     x_aux=Array{Int64,2}(zeros(n,n))
     for i in 1:n
         for j in 1:n
-            println(JuMP.value(x[i,j]))
+            #println(JuMP.value(x[i,j]))
             x_aux[i,j]=JuMP.value(x[i,j])
         end
     end
