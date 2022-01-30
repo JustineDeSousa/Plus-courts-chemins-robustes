@@ -55,8 +55,12 @@ function modelCallback(instance::String)
             end
         end    
     end
+    starting_time=time()
     MOI.set(mp, CPLEX.CallbackFunction(), my_cb_function)
     optimize!(mp)
+    final_time=time()-starting_time
+    status = termination_status(mp)
+    isOptimal = status == MOI.OPTIMAL
     x_val = Array{Float64,2}(zeros(n,n))
     for i in 1:n
         for j in 1:n
@@ -68,15 +72,15 @@ function modelCallback(instance::String)
         y_val[i] = JuMP.value(y[i])
     end
     z_val = JuMP.value(z)
-    for i in 1:n
-        for j in 1:n
-            print(x_val[i,j]," ")
-        end
-        println("")
-    end
-    println("Cost: ",z_val)
-    return 0
+    # for i in 1:n
+    #     for j in 1:n
+    #         print(x_val[i,j]," ")
+    #     end
+    #     println("")
+    # end
+    # println("Cost: ",z_val)
+    return z_val, final_time, isOptimal
 end
 
-instance="20_USA-road-d.BAY.gr"
-modelCallback(instance)
+#instance="20_USA-road-d.BAY.gr"
+#modelCallback(instance)

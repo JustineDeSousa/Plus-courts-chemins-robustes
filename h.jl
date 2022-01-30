@@ -103,3 +103,25 @@ function slaveProblem_1(n::Int64,p::Array{Int64,1},ph::Array{Int64,1},d2::Int64,
     objective_sp1=JuMP.objective_value(sp_1)
     return delta2_aux, objective_sp1
 end
+function solve(method::String,file::String)
+    if method=="callBack"
+        z_val, final_time, isOptimal = modelCallback(file)
+    elseif method== "cuttingPlane"
+        z_val, final_time, isOptimal = cuttingPlane(file)
+    elseif method=="dual"
+        z_val, final_time, isOptimal = duale(file)
+    end
+    return z_val, final_time, isOptimal
+end
+function write_solution(fout, objectiveValue::Float64, resolution_time::Float64, solved::Bool)
+	# n = length(model.variables)
+	# print(fout, "solution = (")
+	# for i in 1:1:n-1
+	# 	tup=(model.variables[i].name,model.variables[i].value)
+	# 	print(fout, string(tup)*"," )
+	# end
+	# tup=(model.variables[n].name,model.variables[n].value)
+	println(fout, " Objective Value " *string(objectiveValue))
+	println(fout, "resolution_time = " * string(round(resolution_time, sigdigits=6)))
+	println(fout, "is_solved = " * string(solved) * "\n")
+end 

@@ -19,21 +19,22 @@ function cuttingPlane(instance::String)
     #objective function
     @objective(mp, Min, z)
     #constraints
-    @constraint(mp, [j in 1:n ; j != s && j != t], sum( x[i,j] for i in 1:n if d[i,j]!=0) == sum(x[j,i] for i in 1:n if d[i,j]!=0))
+    @constraint(mp, [j in 1:n ; j != s && j != t], sum( x[i,j] for i in 1:n if d[i,j]!=0) == sum(x[j,i] for i in 1:n if d[j,i]!=0))
     @constraint(mp, sum(x[s,j] for j in 1:n if d[s,j]!=0 )==1)
     @constraint(mp, sum(x[j,t] for j in 1:n if d[j,t]!=0)==1)
     @constraint(mp, [i in 1:n; i!=s] ,sum(x[i,j] for j in 1:n if d[i,j]!=0)==y[i])
     @constraint(mp, [i in 1:n; i!=t] ,sum(x[j,i] for j in 1:n if d[j,i]!=0)==y[i])
     #we solve the master problem
+    starting_time=time()
     optimize!(mp)
     #we save the obtained solution
-    x_aux=Array{Int64,2}(zeros(n,n))
+    x_aux=Array{Float64,2}(zeros(n,n))
     for i in 1:n
         for j in 1:n
             x_aux[i,j]=JuMP.value(x[i,j])
         end
     end
-    y_aux=Vector{Int64}(zeros(n))
+    y_aux=Vector{Float64}(zeros(n))
     for i in 1:n
         y_aux[i]= JuMP.value(y[i])    
     end
@@ -73,16 +74,21 @@ function cuttingPlane(instance::String)
         #println("sp_0: ", value_sp_o, " z: ", z_aux)
         #println("sp_1: ", value_sp_1, " S: ", S)
     end
-    for i in 1:n
-        for j in 1:n
-            print(x_aux[i,j]," ")
-        end
-        println("")
-    end
-    println("Cost: ",z_aux)
-    return z_aux
+    final_time=time()-starting_time
+    status = termination_status(mp)
+    isOptimal = status == MOI.OPTIMAL
+    # for i in 1:n
+    #     for j in 1:n
+    #         if x_aux[i,j]!=0
+    #             println("arc: ", (i,j))
+    #         end
+    #     end
+    # end
+    # println("Cost: ",z_aux)
+    #println("Cost: ",z_aux-sum(d[i,j]*x_aux[i,j] for i in 1:n , j in 1:n if d[i,j]!=0))
+    return z_aux, final_time, isOptimal
 
 end
 
-instance="20_USA-road-d.BAY.gr"
-cuttingPlane(instance)
+#instance="20_USA-road-d.BAY.gr"
+#cuttingPlane(instance)
