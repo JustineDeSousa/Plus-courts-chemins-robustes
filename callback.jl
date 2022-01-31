@@ -2,7 +2,7 @@ using JuMP
 using CPLEX
 include("h.jl") 
 
-function modelCallback(instance::String)
+function modelCallback(instance::String, maxTime::Float64)
     include("instances/$instance")
     d = Array{Float64,2}(zeros(n,n)) 
     grandD = Array{Float64,2}(zeros(n,n))
@@ -14,6 +14,7 @@ function modelCallback(instance::String)
     #Master problem creation
     mp=Model(CPLEX.Optimizer)
     MOI.set(mp, MOI.NumberOfThreads(), 1)
+    set_time_limit_sec(mp, maxTime)
     set_silent(mp)
     #Variables
     @variable(mp, z>=0)

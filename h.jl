@@ -1,4 +1,6 @@
+using Plots
 
+littleEp=0.000001
 function read(fichier)
     if isfile(fichier)
         myFile = open(fichier)
@@ -73,7 +75,7 @@ function slaveProblem_o(n::Int64,grandD::Array{Float64,2},d::Array{Float64,2},d1
     @constraint(sp_o, sum(delta1[i,j] for i in 1:n, j in 1:n if d[i,j]!=0) <= d1 )
     @constraint(sp_o, [i in 1:n, j in 1:n],delta1[i,j]<=grandD[i,j])
     #objective function
-    @objective(sp_o, Max, sum(d[i,j]*(1+delta1[i,j])*x_aux[i,j] for i in 1:n, j in 1:n))
+    @objective(sp_o, Max, sum(d[i,j]*(1+delta1[i,j])*x_aux[i,j] for i in 1:n, j in 1:n if d[i,j]!=0))
     #solve
     optimize!(sp_o)
     delta1_aux=Array{Float64,2}(zeros(n,n))
@@ -103,13 +105,13 @@ function slaveProblem_1(n::Int64,p::Array{Int64,1},ph::Array{Int64,1},d2::Int64,
     objective_sp1=JuMP.objective_value(sp_1)
     return delta2_aux, objective_sp1
 end
-function solve(method::String,file::String)
+function solve(method::String,file::String,maxTime::Float64)
     if method=="callBack"
-        z_val, final_time, isOptimal = modelCallback(file)
+        z_val, final_time, isOptimal = modelCallback(file, maxTime)
     elseif method== "cuttingPlane"
-        z_val, final_time, isOptimal = cuttingPlane(file)
+        z_val, final_time, isOptimal = cuttingPlane(file, maxTime)
     elseif method=="dual"
-        z_val, final_time, isOptimal = duale(file)
+        z_val, final_time, isOptimal = duale(file, maxTime)
     end
     return z_val, final_time, isOptimal
 end
@@ -121,7 +123,125 @@ function write_solution(fout, objectiveValue::Float64, resolution_time::Float64,
 	# 	print(fout, string(tup)*"," )
 	# end
 	# tup=(model.variables[n].name,model.variables[n].value)
-	println(fout, " Objective Value " *string(objectiveValue))
+	println(fout, "Objective_Value = " *string(objectiveValue))
 	println(fout, "resolution_time = " * string(round(resolution_time, sigdigits=6)))
 	println(fout, "is_solved = " * string(solved) * "\n")
+end 
+
+function performanceDiagram()
+    """
+Create a pdf file which contains a performance diagram associated to the results of the ../res folder
+Display one curve for each subfolder of the ../res folder.
+Arguments
+- outputFile: path of the output file
+Prerequisites:
+- Each subfolder must contain text files
+- Each text file correspond to the resolution of one instance
+- Each text file contains a variable "resolution_time" and a variable "is_solved"
+"""
+    resultFolder = "res/" 
+	println("resultFolder = ", resultFolder)
+    maxSize = 0# Maximal number of files in a subfolder
+    subfolderCount = 0	# Number of subfolders
+    folderName = Array{String, 1}()
+    # For each file in the result folder
+    for file in readdir(resultFolder)
+        path = resultFolder * file
+        if isdir(path)	# If it is a subfolder
+            folderName = vcat(folderName, file)
+            subfolderCount += 1
+            folderSize = size(readdir(path), 1)
+            if maxSize < folderSize
+                maxSize = folderSize
+            end
+        end
+    end
+
+	
+    # Array that will contain the resolution times (one line for each subfolder)
+    results = Array{Float64}(undef, subfolderCount, maxSize)
+
+    for i in 1:subfolderCount
+        for j in 1:maxSize
+            results[i, j] = Inf
+        end
+    end
+
+    folderCount = 0
+    maxresolution_time = 0
+
+    # For each subfolder
+    for file in readdir(resultFolder)
+        path = resultFolder * file
+        if isdir(path)
+            folderCount += 1
+            fileCount = 0
+            # For each text file in the subfolder
+            for resultFile in filter(x->occursin(".res", x), readdir(path))
+                fileCount += 1
+                println(path * "/" * resultFile)
+                include(path * "/" * resultFile)
+                if is_solved
+                    results[folderCount, fileCount] = resolution_time
+                    if resolution_time > maxresolution_time
+                        maxresolution_time = resolution_time
+                    end 
+                end 
+            end 
+        end
+    end 
+
+
+	results = sort(results, dims=2)    # Sort each row increasingly
+	println("Max solve time: ", maxresolution_time)
+    
+
+    for dim in 1: size(results, 1)	# For each line to plot
+        x = Array{Float64, 1}()
+        y = Array{Float64, 1}()
+
+        # x coordinate of the previous inflexion point
+        previousX = 0
+        previousY = 0
+
+        append!(x, previousX)
+        append!(y, previousY)
+            
+        currentId = 1	# Current position in the line
+
+        # While the end of the line is not reached 
+        while currentId != size(results, 2) && results[dim, currentId] != Inf
+			identicalValues = 1# Number of elements which have the value previousX
+            # While the value is the same
+            while currentId < size(results, 2) && results[dim, currentId] == previousX
+                currentId += 1
+                identicalValues += 1
+            end
+            # Add the proper points
+            append!(x, previousX)
+            append!(y, currentId - 1)
+            if results[dim, currentId] != Inf
+                append!(x, results[dim, currentId])
+                append!(y, currentId - 1)
+            end
+            previousX = results[dim, currentId]
+            previousY = currentId - 1
+        end
+        append!(x, maxresolution_time)
+        append!(y, currentId - 1)
+
+        
+        if dim == 1# If it is the first subfolder
+
+            # Draw a new plot
+            #outputFile = "diagram_" 
+            plot(x, y, label = folderName[dim], legend = :bottomright, xaxis = "Time (s)", yaxis = "Solved instances",linewidth=3)
+            #savefig(plot!(x, y, label = folderName[dim], linewidth=3), outputFile)
+		# Otherwise 
+        else
+            # Add the new curve to the created plot
+			outputFile = "diagram_" 
+            savefig(plot!(x, y, label = folderName[dim], linewidth=3), outputFile)
+        end 
+    end
 end 

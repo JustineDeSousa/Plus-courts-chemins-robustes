@@ -2,7 +2,7 @@ using JuMP
 using CPLEX
 include("h.jl")     
   
-function duale(instance::String)
+function duale(instance::String, maxTime::Float64)
     # #Reading data
     include("instances/$instance")
     d = Array{Float64,2}(zeros(n,n)) 
@@ -13,6 +13,7 @@ function duale(instance::String)
     end
     #model creation
     m=Model(CPLEX.Optimizer)
+    set_time_limit_sec(m, maxTime)
     set_silent(m)
     # #variables
     @variable(m, x[1:n , 1:n], Bin)

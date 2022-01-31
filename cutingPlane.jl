@@ -1,7 +1,7 @@
 using JuMP
 using CPLEX
 include("h.jl")  
-function cuttingPlane(instance::String)
+function cuttingPlane(instance::String, maxTime::Float64)
     include("instances/$instance")
     d = Array{Float64,2}(zeros(n,n)) 
     grandD = Array{Float64,2}(zeros(n,n))
@@ -42,15 +42,17 @@ function cuttingPlane(instance::String)
     delta1_aux, value_sp_o = slaveProblem_o(n,grandD,d,d1,x_aux)
     delta2_aux, value_sp_1 = slaveProblem_1(n,p,ph,d2,y_aux)
     count=0
-    while (value_sp_o > z_aux || value_sp_1> S) 
+    while (value_sp_o > (z_aux+littleEp) || value_sp_1> (S+littleEp) ) && maxTime>(time()-starting_time+littleEp)
         #&& count<150
         count=count+1
+        #println(count)
         #sp_o > z_aux 
         #|| sp_1> S
-        if value_sp_o > z_aux
+        if value_sp_o > z_aux + littleEp
+            println("sp_o: ", value_sp_o, "z: ", z_aux)
             @constraint(mp, sum(d[i,j]*(1+delta1_aux[i,j])*x[i,j] for i in 1:n , j in 1:n if d[i,j]!=0)<=z)
         end
-        if value_sp_1 > S
+        if value_sp_1 > S + littleEp
             #println("sp_1: ", value_sp_1, " S: ", S)
             @constraint(mp, sum((p[i]+delta2_aux[i]*ph[i])*y[i] for i in 1:n) <= S)
             #println(sum((p[i]+delta2_aux[i]*ph[i])*y_aux[i] for i in 1:n))
@@ -68,15 +70,19 @@ function cuttingPlane(instance::String)
         for i in 1:n
             y_aux[i] = JuMP.value(y[i])    
         end
-        z_aux=JuMP.value(z)
+        z_aux=JuMP.objective_value(mp)
         delta1_aux, value_sp_o = slaveProblem_o(n,grandD,d,d1,x_aux)
         delta2_aux, value_sp_1 = slaveProblem_1(n,p,ph,d2,y_aux)
         #println("sp_0: ", value_sp_o, " z: ", z_aux)
         #println("sp_1: ", value_sp_1, " S: ", S)
     end
     final_time=time()-starting_time
-    status = termination_status(mp)
-    isOptimal = status == MOI.OPTIMAL
+    if value_sp_o > (z_aux+littleEp) || value_sp_1> (S+littleEp)
+        isOptimal = false
+    else
+        status = termination_status(mp)
+        isOptimal = status == MOI.OPTIMAL
+    end
     # for i in 1:n
     #     for j in 1:n
     #         if x_aux[i,j]!=0
@@ -86,9 +92,10 @@ function cuttingPlane(instance::String)
     # end
     # println("Cost: ",z_aux)
     #println("Cost: ",z_aux-sum(d[i,j]*x_aux[i,j] for i in 1:n , j in 1:n if d[i,j]!=0))
+    println(count)
     return z_aux, final_time, isOptimal
 
 end
 
-#instance="20_USA-road-d.BAY.gr"
-#cuttingPlane(instance)
+#instance="20_USA-road-d.COL.gr"
+#cuttingPlane(instance, 100.0)
