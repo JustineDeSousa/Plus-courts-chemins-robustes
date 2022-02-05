@@ -28,6 +28,7 @@ function solve_instances(method, maxTime::Float64)
 end
 
 methods_ = ["callBack", "cuttingPlane", "dual", "heuristic"]
+# methods_ = ["heuristic"]
 for meth in methods_
 	solve_instances(meth, 100.0)
 end
