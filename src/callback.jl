@@ -49,12 +49,12 @@ function modelCallback(instance::String, maxTime::Float64)
             if value_sp_o > z_val+littleEp
                 con = @build_constraint(sum(d[i,j]*(1+delta1_aux[i,j])*x[i,j] for i in 1:n , j in 1:n if d[i,j]!=0)<=z)
                 MOI.submit(mp, MOI.LazyConstraint(cb_data), con)
-                println("Add constraint val_sp_o <= z")
+                # println("Add constraint val_sp_o <= z")
             end
             if value_sp_1 > S+littleEp #&& time()-starting_time<maxTime
                 con2 = @build_constraint(sum((p[i]+delta2_aux[i]*ph[i])*y[i] for i in 1:n) <= S)
                 MOI.submit(mp, MOI.LazyConstraint(cb_data), con2)
-                println("Add constraint val_sp_1 <= S")
+                # println("Add constraint val_sp_1 <= S")
             end
         end    
     end 

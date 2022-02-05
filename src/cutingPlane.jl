@@ -50,7 +50,7 @@ function cuttingPlane(instance::String, maxTime::Float64)
         #sp_o > z_aux 
         #|| sp_1> S
         if value_sp_o > z_aux + littleEp
-            println("sp_o: ", value_sp_o, "z: ", z_aux)
+            # println("sp_o: ", value_sp_o, "z: ", z_aux)
             @constraint(mp, sum(d[i,j]*(1+delta1_aux[i,j])*x[i,j] for i in 1:n , j in 1:n if d[i,j]!=0)<=z)
         end
         if value_sp_1 > S + littleEp

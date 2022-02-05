@@ -4,6 +4,7 @@ include("h.jl")
 include("cutingPlane.jl")
 include("dual.jl")
 include("callback.jl")
+include("heuristic.jl")
 
 function solve_instances(method, maxTime::Float64)
     resFolder="../res/"
