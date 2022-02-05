@@ -1,7 +1,7 @@
 using Plots
 
 littleEp=0.000001
-function read(fichier)
+function read_(fichier)
     if isfile(fichier)
         myFile = open(fichier)
         data = readlines(myFile)
@@ -11,7 +11,7 @@ function read(fichier)
         S=0
         d1=0
         d2=0
-        p = Array{Int64,1}(undef,0) 
+        p = Array{Int64,1}(undef,0)
         ph = Array{Int64,1}(undef,0)
         aux=Array{Tuple{Tuple{Int,Int},Tuple{Float64,Float64}},1}(undef,0)
         for line in data
@@ -63,7 +63,6 @@ function read(fichier)
     else
         println("ERROR")
     end
-    
     return n,s,t,S,d1,d2,p,ph,d,grandD
 end
 function slaveProblem_o(n::Int64,grandD::Array{Float64,2},d::Array{Float64,2},d1::Int64,x_aux::Array{Float64,2})
@@ -117,17 +116,21 @@ function solve(method::String,file::String,maxTime::Float64)
     end
     return sol, z_val, final_time, isOptimal, status
 end
-function write_solution(fout, sol, objectiveValue::Float64, resolution_time::Float64, solved::Bool, status::String)
+function write_solution(fout, sol, objectiveValue, resolution_time::Float64, solved::Bool, status::String)
 	n = length(sol)
 	print(fout, "solution = [")
 	for i in 1:1:n-1
 		print(fout, sol[i], ", " )
 	end
-	println(fout, sol[n], "]" )
+	if n > 0
+		print(fout, sol[n])
+	end
+	println(fout, "]")
 	println(fout, "Objective_Value = " *string(objectiveValue))
 	println(fout, "resolution_time = " * string(round(resolution_time, sigdigits=6)))
 	println(fout, "is_solved = " * string(solved))
 	println(fout, "status = " * status)
+	println(status)
 end
 
 function performanceDiagram()
