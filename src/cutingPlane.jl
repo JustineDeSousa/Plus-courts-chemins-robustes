@@ -2,7 +2,7 @@ using JuMP
 using CPLEX
 include("h.jl")  
 function cuttingPlane(instance::String, maxTime::Float64)
-    include("instances/$instance")
+    include("../instances/$instance")
     d = Array{Float64,2}(zeros(n,n)) 
     grandD = Array{Float64,2}(zeros(n,n))
     for i in 1:size(Mat,1)
@@ -49,7 +49,7 @@ function cuttingPlane(instance::String, maxTime::Float64)
         #sp_o > z_aux 
         #|| sp_1> S
         if value_sp_o > z_aux + littleEp
-            println("sp_o: ", value_sp_o, "z: ", z_aux)
+            # println("sp_o: ", value_sp_o, "z: ", z_aux)
             @constraint(mp, sum(d[i,j]*(1+delta1_aux[i,j])*x[i,j] for i in 1:n , j in 1:n if d[i,j]!=0)<=z)
         end
         if value_sp_1 > S + littleEp
@@ -92,8 +92,9 @@ function cuttingPlane(instance::String, maxTime::Float64)
     # end
     # println("Cost: ",z_aux)
     #println("Cost: ",z_aux-sum(d[i,j]*x_aux[i,j] for i in 1:n , j in 1:n if d[i,j]!=0))
-    println(count)
-    return z_aux, final_time, isOptimal
+    # println(count)
+	status = """ "" """
+    return y_aux, z_aux, final_time, isOptimal, status
 
 end
 

@@ -31,6 +31,7 @@ mutable struct Instance
 	poids::Vector{Float64} #Augmentation des poids aux sommets
 	res_time::Float64
 	solved::Bool
+	diagnostic::String
 	
 	#Constructeur
 	function Instance(instance::String)
@@ -50,10 +51,15 @@ mutable struct Instance
 		q = []
 		res_time = 0
 		
-		new(n,s,t,S, d1,d2,p,ph,d,D, nodes, path_, delta, q, res_time, false)
-	end	
-end
+		new(n,s,t,S, d1,d2,p,ph,d,D, nodes, path_, delta, q, res_time, false, "RESOLUTION_NOT_OVER")
+	end
 
+end
+function obj_value(inst::Instance)
+	weight = sum(inst.p[i] for i in inst.path_) + sum(inst.poids[i] for i in length(inst.path_))
+	duration = sum(inst.d[inst.path_[i],inst.path_[i+1]]*(1+inst.delta[i]) for i in 1:length(inst.path_)-1)
+	return weight + duration
+end
 function neighbours(nd::Int, inst::Instance)
 	voisins = []
 	for i in 1:n
@@ -108,7 +114,7 @@ end
 	# end
 # end
 
-function a_star_algorithm(inst::Instance)
+function a_star_algorithm(inst::Instance, max_time::Float64)
 	inst.nodes[s].score = p[s]
 	open_list = PriorityQueue{Int, Float64}() #nodes visited who's neighbours haven't been inspected
 	enqueue!(open_list, s, inst.p[s])
@@ -116,8 +122,9 @@ function a_star_algorithm(inst::Instance)
 	
 	parents = zeros(Int, inst.n)
 	parents[s] = s
+	start = time()
 	
-	while length(open_list) > 0
+	while length(open_list) > 0 && time() - start < max_time
 		current_nd = dequeue!(open_list) #noeud de plus petit score
 		
 		if current_nd == t #we've reached the end
@@ -128,18 +135,29 @@ function a_star_algorithm(inst::Instance)
 			
 			inst.path_ = reverse(push!(inst.path_, s))
 			
-			
 			if sum(inst.ph[inst.path_[i]] for i in 1:length(inst.path_)) > inst.d2
 				inst.solved = repare_poids!(inst)
 				if inst.solved && sum( inst.D[inst.path_[i], inst.path_[i+1]] for i in 1:length(inst.path_)-1 )  > inst.d1
 					inst.solved = repare_delta!(inst)
+				elseif inst.solved
+					inst.delta = [inst.D[inst.path_[i], inst.path_[i+1]] for i in 1:length(inst.path_)-1 ]
 				end
+			else
+				
 			end
 			
 			weight = sum(inst.p[i] for i in inst.path_) + sum(inst.poids[i] for i in length(inst.path_))
+			
+			if weight > inst.S
+				inst.solved = false
+				inst.diagnostic = "NOT_FEASIBLE_WEIGHTS"
+			elseif inst.solved
+				inst.diagnostic = "SOLUTION_FOUND"
+			end
+			
 			duration = sum(inst.d[inst.path_[i],inst.path_[i+1]]*(1+inst.delta[i]) for i in 1:length(inst.path_)-1)
-			println("Path found : ", inst.path_, "; weight = ", weight, "; duration = ", round(duration, digits=2), 
-					" -- TOTAL = ", weight+duration)
+			# println("Path found : ", inst.path_, "; weight = ", weight, "/", inst.S, "; duration = ", round(duration, digits=2), 
+					# " -- TOTAL = ", weight+duration)
 			return inst
 		end
 		
@@ -164,7 +182,13 @@ function a_star_algorithm(inst::Instance)
 		push!(closed_list, current_nd)
 	end
 	
-	println("Aucun chemin trouvé")
+	inst.solved = false
+	if time() >= max_time
+		inst.diagnostic = "OUT_OF_TIME"
+	else
+		inst.diagnostic = "NOT_FEASIBLE"
+	end
+	# println(inst.diagnostic)
 	return inst
 end
 
@@ -173,13 +197,19 @@ function repare_poids!(inst::Instance)
 	Calcul le pire des cas pour l'augmentation des poids des sommets sur le trajet solution
 	"""
 	model = Model(CPLEX.Optimizer)
+	set_silent(model)
 	@variable(model, poids[1:length(inst.path_)] >= 0)
 	@constraint(model, sum(poids) <= inst.d2)
 	@constraint(model, [k=1:length(inst.path_)], poids[k] <= 2*inst.ph[inst.path_[k]] )
 	@objective(model, Max, sum(poids))
 	optimize!(model)
 	inst.poids = value.(poids)
-	return primal_status(model) != NO_SOLUTION
+	if primal_status(model) == NO_SOLUTION
+		inst.diagnostic = "ROBUST_WEIGHTS_PB"
+		return false
+	else
+		return true
+	end
 end
 function repare_delta!(inst::Instance)
 	"""
@@ -189,23 +219,29 @@ function repare_delta!(inst::Instance)
 	sommets = [(inst.path_[i], inst.path_[i+1]) for i in 1:length(arcs)]
 	
 	model = Model(CPLEX.Optimizer)
+	set_silent(model)
 	@variable(model, delta[1:length(arcs)] >= 0)
 	@constraint(model, sum(delta) <= inst.d1)
 	@constraint(model, [k=1:length(arcs)], delta[k] <= inst.D[sommets[k][1], sommets[k][2]] )
 	@objective(model, Max, sum(delta))
 	optimize!(model)
 	inst.delta = value.(delta)
-	return primal_status(model) != NO_SOLUTION
+	if primal_status(model) == NO_SOLUTION
+		inst.diagnostic = "ROBUST_DURATION_PB"
+		return false
+	else
+		return true
+	end
 end
 
 
-function heuristic(instance::String)
+function heuristic(instance::String, max_time::Float64)
 	inst = Instance("../instances/$instance")
 	start = time()
-	inst = a_star_algorithm(inst)
+	inst = a_star_algorithm(inst, max_time)
 	inst.res_time = time() - start
-	return inst.path_, inst.res_time, inst.solved
+	return inst.path_, obj_value(inst), inst.res_time, inst.solved, " \"" * inst.diagnostic * "\""
 end
 
 instance = "20_USA-road-d.BAY.gr"
-solution, res_time, is_solved = heuristic(instance)
+# heuristic(instance, 100.0)

@@ -4,30 +4,31 @@ include("h.jl")
 include("cutingPlane.jl")
 include("dual.jl")
 include("callback.jl")
+include("heuristic.jl")
 
 function solve_instances(method, maxTime::Float64)
-    resFolder="res/"
-    dataFolder="./instances"
+    resFolder="../res/"
+    dataFolder="../instances"
     for file in filter(x->occursin(".gr", x), readdir(dataFolder))
-        println("-- Resolution of ", file)
-        z_val, final_time, isOptimal = solve(method, file, maxTime)
-        folder = resFolder * method 
-        if !isdir(folder)
-            println(pwd())
-            println(folder)
+        println("-- Resolution of ", file, " with ", method)
+        folder = resFolder * method
+		if !isdir(folder)
             mkdir(folder)
         end
-        outputFile = folder * "/" * SubString(file,1,length(file)-4) * ".res"
-        if !isfile(outputFile)
-            fout = open(outputFile, "w")  
-            write_solution(fout,z_val, final_time, isOptimal)
+		outputFile = folder * "/" * SubString(file,1,length(file)-3) * ".res"
+        
+		if !isfile(outputFile) #if the instance hasn't been solved already
+			sol, z_val, final_time, isOptimal, status = solve(method, file, maxTime)
+            fout = open(outputFile, "w")
+            write_solution(fout, sol, z_val, final_time, isOptimal, status)
             close(fout)
         end
     end
     
 end
-methods=["callBack", "cuttingPlane", "dual"]
- for meth in methods
-     solve_instances(meth, 100.0)
- end
+
+methods_ = ["callBack", "cuttingPlane", "dual", "heuristic"]
+for meth in methods_
+	solve_instances(meth, 100.0)
+end
 performanceDiagram()

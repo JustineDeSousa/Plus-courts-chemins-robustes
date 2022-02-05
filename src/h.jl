@@ -107,26 +107,28 @@ function slaveProblem_1(n::Int64,p::Array{Int64,1},ph::Array{Int64,1},d2::Int64,
 end
 function solve(method::String,file::String,maxTime::Float64)
     if method=="callBack"
-        z_val, final_time, isOptimal = modelCallback(file, maxTime)
+        sol, z_val, final_time, isOptimal, status = modelCallback(file, maxTime)
     elseif method== "cuttingPlane"
-        z_val, final_time, isOptimal = cuttingPlane(file, maxTime)
+        sol, z_val, final_time, isOptimal, status = cuttingPlane(file, maxTime)
     elseif method=="dual"
-        z_val, final_time, isOptimal = duale(file, maxTime)
+        sol, z_val, final_time, isOptimal, status = duale(file, maxTime)
+	elseif method == "heuristic"
+		sol, z_val, final_time, isOptimal, status = heuristic(file, maxTime)
     end
-    return z_val, final_time, isOptimal
+    return sol, z_val, final_time, isOptimal, status
 end
-function write_solution(fout, objectiveValue::Float64, resolution_time::Float64, solved::Bool)
-	# n = length(model.variables)
-	# print(fout, "solution = (")
-	# for i in 1:1:n-1
-	# 	tup=(model.variables[i].name,model.variables[i].value)
-	# 	print(fout, string(tup)*"," )
-	# end
-	# tup=(model.variables[n].name,model.variables[n].value)
+function write_solution(fout, sol, objectiveValue::Float64, resolution_time::Float64, solved::Bool, status::String)
+	n = length(sol)
+	print(fout, "solution = [")
+	for i in 1:1:n-1
+		print(fout, sol[i], ", " )
+	end
+	println(fout, sol[n], "]" )
 	println(fout, "Objective_Value = " *string(objectiveValue))
 	println(fout, "resolution_time = " * string(round(resolution_time, sigdigits=6)))
-	println(fout, "is_solved = " * string(solved) * "\n")
-end 
+	println(fout, "is_solved = " * string(solved))
+	println(fout, "status = " * status)
+end
 
 function performanceDiagram()
     """
@@ -139,7 +141,7 @@ Prerequisites:
 - Each text file correspond to the resolution of one instance
 - Each text file contains a variable "resolution_time" and a variable "is_solved"
 """
-    resultFolder = "res/" 
+    resultFolder = "../res/" 
 	println("resultFolder = ", resultFolder)
     maxSize = 0# Maximal number of files in a subfolder
     subfolderCount = 0	# Number of subfolders
@@ -240,7 +242,7 @@ Prerequisites:
 		# Otherwise 
         else
             # Add the new curve to the created plot
-			outputFile = "diagram_" 
+			outputFile = "../diagram" 
             savefig(plot!(x, y, label = folderName[dim], linewidth=3), outputFile)
         end 
     end

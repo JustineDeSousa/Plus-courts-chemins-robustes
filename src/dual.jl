@@ -4,7 +4,7 @@ include("h.jl")
   
 function duale(instance::String, maxTime::Float64)
     # #Reading data
-    include("instances/$instance")
+    include("../instances/$instance")
     d = Array{Float64,2}(zeros(n,n)) 
     grandD = Array{Float64,2}(zeros(n,n))
     for i in 1:size(Mat,1)
@@ -69,7 +69,8 @@ function duale(instance::String, maxTime::Float64)
     #     end   
     # end
     # println("Cost: ",z_aux)
-    return z_aux, final_time, isOptimal
+	status = """ "" """
+    return y_aux, z_aux, final_time, isOptimal, status
 
 end
 #instance="20_USA-road-d.BAY.gr"
