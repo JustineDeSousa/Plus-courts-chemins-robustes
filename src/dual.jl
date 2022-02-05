@@ -4,20 +4,21 @@ include("h.jl")
   
 function duale(instance::String, maxTime::Float64)
     # #Reading data
-    include("instances/$instance")
-    d = Array{Float64,2}(zeros(n,n)) 
-    grandD = Array{Float64,2}(zeros(n,n))
-    for i in 1:size(Mat,1)
-        d[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,3]
-        grandD[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,4]
-    end
+    # include("instances/$instance")
+    # d = Array{Float64,2}(zeros(n,n)) 
+    # grandD = Array{Float64,2}(zeros(n,n))
+    # for i in 1:size(Mat,1)
+    #     d[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,3]
+    #     grandD[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,4]
+    # end
+    n,s,t,S,d1,d2,p,ph,d,grandD = read("../instances/$instance")
     #model creation
     m=Model(CPLEX.Optimizer)
     set_time_limit_sec(m, maxTime)
     set_silent(m)
     # #variables
     @variable(m, x[1:n , 1:n], Bin)
-    @variable(m, beta[1:n , 1:n], Bin)
+    @variable(m, beta[1:n , 1:n]>=0)
     @variable(m, y[1:n], Bin)
     @variable(m, alpha>=0)
     @variable(m, gamma>=0)
@@ -41,7 +42,7 @@ function duale(instance::String, maxTime::Float64)
     status = termination_status(m)
     isOptimal = status == MOI.OPTIMAL
     alpha_aux= JuMP.value(alpha)
-    beta_aux=Array{Int64,2}(zeros(n,n))
+    beta_aux=Array{Float64,2}(zeros(n,n))
     for i in 1:n
         for j in 1:n
             #println(JuMP.value(x[i,j]))
@@ -69,11 +70,11 @@ function duale(instance::String, maxTime::Float64)
     #     end   
     # end
     # println("Cost: ",z_aux)
-    return z_aux, final_time, isOptimal
+    return y_aux, z_aux, final_time, isOptimal, status
 
 end
 #instance="20_USA-road-d.BAY.gr"
-#duale("20_USA-road-d.BAY.gr")
+#duale("400_USA-road-d.BAY.gr",100.0)
 
 
 

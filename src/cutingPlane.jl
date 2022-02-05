@@ -2,13 +2,14 @@ using JuMP
 using CPLEX
 include("h.jl")  
 function cuttingPlane(instance::String, maxTime::Float64)
-    include("instances/$instance")
-    d = Array{Float64,2}(zeros(n,n)) 
-    grandD = Array{Float64,2}(zeros(n,n))
-    for i in 1:size(Mat,1)
-        d[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,3]
-        grandD[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,4]
-    end
+    # include("instances/$instance")
+    # d = Array{Float64,2}(zeros(n,n)) 
+    # grandD = Array{Float64,2}(zeros(n,n))
+    # for i in 1:size(Mat,1)
+    #     d[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,3]
+    #     grandD[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,4]
+    # end
+    n,s,t,S,d1,d2,p,ph,d,grandD = read("../instances/$instance")
     #Master problem creation
     mp=Model(CPLEX.Optimizer)
     set_silent(mp)
@@ -79,6 +80,7 @@ function cuttingPlane(instance::String, maxTime::Float64)
     final_time=time()-starting_time
     if value_sp_o > (z_aux+littleEp) || value_sp_1> (S+littleEp)
         isOptimal = false
+        status = """ "" """
     else
         status = termination_status(mp)
         isOptimal = status == MOI.OPTIMAL
@@ -93,9 +95,10 @@ function cuttingPlane(instance::String, maxTime::Float64)
     # println("Cost: ",z_aux)
     #println("Cost: ",z_aux-sum(d[i,j]*x_aux[i,j] for i in 1:n , j in 1:n if d[i,j]!=0))
     println(count)
-    return z_aux, final_time, isOptimal
+    
+    return y_val, z_val, final_time, isOptimal, status
 
 end
 
-#instance="20_USA-road-d.COL.gr"
+#instance="400_USA-road-d.BAY.gr"
 #cuttingPlane(instance, 100.0)
