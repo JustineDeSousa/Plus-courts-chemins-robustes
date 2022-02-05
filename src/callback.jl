@@ -64,11 +64,12 @@ function modelCallback(instance::String, maxTime::Float64)
     final_time=time()-starting_time
     if final_time > maxTime+littleEp#value_sp_o > (z_aux+littleEp) || value_sp_1> (S+littleEp)
         isOptimal = false
-        status = """ "" """
+        
     else
         status = termination_status(mp)
         isOptimal = status == MOI.OPTIMAL
     end
+    status = """ "" """
     #status = termination_status(mp)
     #isOptimal = status == MOI.OPTIMAL
     x_val = Array{Float64,2}(zeros(n,n))
