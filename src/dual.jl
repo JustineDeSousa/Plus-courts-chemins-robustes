@@ -11,7 +11,7 @@ function duale(instance::String, maxTime::Float64)
     #     d[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,3]
     #     grandD[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,4]
     # end
-    n,s,t,S,d1,d2,p,ph,d,grandD = read("../instances/$instance")
+    n,s,t,S,d1,d2,p,ph,d,grandD = read_("../instances/$instance")
     #model creation
     m=Model(CPLEX.Optimizer)
     set_time_limit_sec(m, maxTime)
