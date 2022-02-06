@@ -51,14 +51,14 @@ function duale(instance::String, maxTime::Float64)
         end
     end
     #println((sum(grandD[i,j]*beta_aux[i,j] for i in 1:n, j in 1:n if d[i,j]!=0 )+d1*alpha_aux))
-    x_aux=Array{Int64,2}(zeros(n,n))
+    x_aux=Array{Float64,2}(zeros(n,n))
     for i in 1:n
         for j in 1:n
             #println(JuMP.value(x[i,j]))
             x_aux[i,j]=JuMP.value(x[i,j])
         end
     end
-    y_aux=Vector{Int64}(undef,0)
+    y_aux=Vector{Float64}(undef,0)
     for i in 1:n
         append!(y_aux, JuMP.value(y[i]))    
     end
