@@ -330,15 +330,10 @@ function resultsArray()
 	end
 	
 	
-    unique(solvedInstances)	# Only keep one string for each instance solved
-
     # For each resolution method, add two columns in the array
     for folder in folderName
         header *= "ccc"
     end
-	if method=="Best"
-		header *= "cccc|"
-	end
 
     header *= "}\n\t\\hline\n"
 
