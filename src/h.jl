@@ -267,64 +267,66 @@ Prerequisites:
 - Each text file correspond to the resolution of one instance
 - Each text file contains a variable "resolution_time" and a variable "is_solved"
 """
-function resultsArray(type_="queens", method="Best")
-    resultFolder = "res/" * type_ * "/" * method * "/"
+function resultsArray()
     
-    maxSize = 0	# Maximal number of files in a subfolder
-    subfolderCount = 0	# Number of subfolders
-	outputFile = "array_" * type_ * "_" * method * ".tex"
-    fout = open(outputFile, "w")	# Open the latex output file
+    resultFolder = "../res/"
+    dataFolder = "../data/"
+    
+    # Maximal number of files in a subfolder
+    maxSize = 0
+
+    # Number of subfolders
+    subfolderCount = 0
+
+    # Open the latex output file
+    fout = open("../resultsArray.tex", "w")
 
     # Print the latex file output
-    println(fout, raw"""
-	\documentclass[main.tex]{subfiles}
-	%\newmargin{0.5cm}{0.5cm}
-	\begin{document}
-	\thispagestyle{empty}
-	""")
+    println(fout, raw"""\documentclass[main.tex]{subfiles}
+\margin{0.5cm}{3cm}
+\begin{document}""")
 
     header = raw"""
-	\begin{landscape}
-	\begin{center}
-	\begin{table}[h]
-	\centering
-	\caption{}
-	\label{}
-	\renewcommand{\arraystretch}{1.4} 
-	\begin{tabular}{|l|"""
+\begin{landscape}
+\begin{center}
+\renewcommand{\arraystretch}{1.4} 
+ \begin{tabular}{l"""
 
-    folderName = Array{String, 1}()	# Name of the subfolder of the result folder (i.e, the resolution methods used)
-    solvedInstances = Array{String, 1}()# List of all the instances solved by at least one resolution method
+    # Name of the subfolder of the result folder (i.e, the resolution methods used)
+    folderName = Array{String, 1}()
 
-	if method=="Best"
-		path = resultFolder
-		println("path = ", path)
-		folderSize = size(readdir(path), 1)
-		for file2 in filter(x->occursin(".res", x), readdir(path))
-			solvedInstances = vcat(solvedInstances, file2)
-		end 
-		if maxSize < folderSize
-			maxSize = folderSize
-		end
-	
-	else
-		# For each file in the result folder
-		for file in readdir(resultFolder)
-			path = resultFolder * file
-			println("path = ", path)
-			if isdir(path)        # If it is a subfolder
-				folderName = vcat(folderName, file)	# Add its name to the folder list
-				subfolderCount += 1
-				folderSize = size(readdir(path), 1)
-				# Add all its files in the solvedInstances array
-				for file2 in filter(x->occursin(".res", x), readdir(path))
-					solvedInstances = vcat(solvedInstances, file2)
-				end 
-				if maxSize < folderSize
-					maxSize = folderSize
-				end
-			end
-		end
+    # List of all the instances solved by at least one resolution method
+    solvedInstances = Array{String, 1}()
+
+    # For each file in the result folder
+    for file in readdir(resultFolder)
+
+        path = resultFolder * file
+        
+        # If it is a subfolder
+        if isdir(path)
+            # Add its name to the folder list
+            folderName = vcat(folderName, file)
+            subfolderCount += 1
+            folderSize = size(readdir(path), 1)
+
+            # Add all its files in the solvedInstances array
+            for file2 in filter(x->occursin(".res", x), readdir(path))
+                solvedInstances = vcat(solvedInstances, file2)
+            end 
+
+            if maxSize < folderSize
+                maxSize = folderSize
+            end
+        end
+    end
+
+    # Only keep one string for each instance solved
+    solvedInstances = unique(solvedInstances)
+	sortedSolvedInstances = PriorityQueue{String, Int}()
+	for elmt in solvedInstances
+		num = parse(Int, split(elmt, "_")[1])
+		enqueue!(sortedSolvedInstances, elmt, num)
 	end
 	
 	
@@ -332,88 +334,83 @@ function resultsArray(type_="queens", method="Best")
 
     # For each resolution method, add two columns in the array
     for folder in folderName
-        header *= "cccc|"
+        header *= "ccc"
     end
 	if method=="Best"
 		header *= "cccc|"
 	end
 
-    header *= "}\n\t\\hline\n\\textbf{" * method * " method :}"
-	replace(header, "_" => "\\_")
-	println(header)
+    header *= "}\n\t\\hline\n"
 
     # Create the header line which contains the methods name
     for folder in folderName
-        header *= " & \\multicolumn{4}{c}{\\textbf{" * folder * "}}"
+        header *= " & \\multicolumn{3}{c}{\\textbf{" * folder * "}}"
     end
 
     header *= "\\\\\n\\textbf{Instance} "
 
     # Create the second header line with the content of the result columns
     for folder in folderName
-        header *= " & \\textbf{Solved ?} & \\textbf{(s)} & \\textbf{Nodes} & \\textbf{(s)/Nd}"
+		if folder  == "heuristic"
+			header *= " & \\textbf{Temps (s)} & \\textbf{Solution ?} & \\textbf{Valeur}"
+		else
+			header *= " & \\textbf{Temps (s)} & \\textbf{Optimal ?} & \\textbf{Valeur}"
+		end
+        
     end
-	if method=="Best"
-		header *= " & \\textbf{Solved ?} & \\textbf{(s)} & \\textbf{Nodes} & \\textbf{(s)/Nd}"
-	end
 
     header *= "\\\\\\hline\n"
 
-    footer = raw"""
-	\hline\end{tabular}
-	\end{table}
-	\end{center}
-	\end{landscape}
-	"""
-    println(fout, header)	# Replace the potential underscores '_' in file names
+    footer = raw"""\hline\end{tabular}
+\end{center}
+\end{landscape}
+"""
+    println(fout, header)
 
-    maxInstancePerPage = 32	# On each page an array will contain at most maxInstancePerPage lines with results
+    # On each page an array will contain at most maxInstancePerPage lines with results
+    maxInstancePerPage = 31
     id = 1
 
     # For each solved files
-	println("solvedInstances = ", solvedInstances)
-    for solvedInstance in solvedInstances
+    for solvedInstance in keys(sortedSolvedInstances)
+		
         # If we do not start a new array on a new page
         if rem(id, maxInstancePerPage) == 0
             println(fout, footer, "\\newpage")
             println(fout, header)
         end 
 
-        print(fout, replace(solvedInstance, "_" => "\\_"))	# Replace the potential underscores '_' in file names
+		instance = split(solvedInstance, "_")
+		num_instance = instance[1]
+		city = split(instance[2], ".")[2]
+        # Replace the potential underscores '_' in file names
+        print(fout, num_instance*"\\_"*city)
 
-		if method=="Best"
-			path = resultFolder * "/" * solvedInstance
-			if isfile(path)	# If the instance has been solved by this method
-				println("../"*path)
-				include("../"*path)
-				print(fout, " & ")
-				if is_solved
-					print(fout, "\$\\times\$")
-				end 
-			#If the instance has not been solved by this method
-			else
-				print(fout, " & - & - ")
-			end
-			println(fout, " & ", round(resolution_time, digits=2), " & ", nb_nodes, " & ", round((resolution_time-root_time)/nb_nodes, sigdigits=2))
-		else
-			# For each resolution method
-			println("folderName= ", folderName)
-			for method in folderName
-				path = resultFolder * method * "/" * solvedInstance
-				if isfile(path)	# If the instance has been solved by this method
-					println("../"*path)
-					include("../"*path)
-					print(fout, " & ")
-					if is_solved
-						print(fout, "\$\\times\$")
-					end 
-				#If the instance has not been solved by this method
+        # For each resolution method
+        for method in folderName
+
+            path = resultFolder * method * "/" * solvedInstance
+
+            # If the instance has been solved by this method
+            if isfile(path)
+                include(path)
+
+                print(fout, " & ", round(resolution_time, digits=2), " & ")
+
+                if is_solved
+                    print(fout, "\$\\checkmark\$ & ")
 				else
-					print(fout, " & - & - ")
-				end
-				println(fout, " & ", round(resolution_time, digits=2), " & ", nb_nodes, " & ", round((resolution_time-root_time)/nb_nodes, sigdigits=2))
-			end
-		end
+					print(fout, "\$\\times\$ & ")
+                end
+				
+				print(fout, round(Int, Objective_Value))
+                
+            # If the instance has not been solved by this method
+            else
+                println(fout, " & - & - & - ")
+            end
+        end
+
         println(fout, "\\\\")
 
         id += 1
