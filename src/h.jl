@@ -265,7 +265,6 @@ Arguments
 Prerequisites:
 - Each subfolder must contain text files
 - Each text file correspond to the resolution of one instance
-- Each text file contains a variable "resolution_time" and a variable "is_solved"
 """
 function resultsArray()
     
@@ -415,4 +414,3 @@ function resultsArray()
     println(fout, footer)
     println(fout, "\\end{document}")
     close(fout)
-end 
