@@ -272,7 +272,7 @@ Prerequisites:
 - Each text file correspond to the resolution of one instance
 """
 function resultsArrayGAP()
-    
+    println("--------- RESULTS ARRAY  ---------")
     resultFolder = "../res/"
     dataFolder = "../data/"
     
@@ -287,12 +287,12 @@ function resultsArrayGAP()
 
     # Print the latex file output
     println(fout, raw"""\documentclass[main.tex]{subfiles}
-\begin{document}""")
+	\begin{document}""")
 
     header = raw"""
-\begin{center}
-\renewcommand{\arraystretch}{1.4} 
- \begin{tabular}{l"""
+	\begin{center}
+	\renewcommand{\arraystretch}{1.4} 
+	\begin{tabular}{l"""
 
     # Name of the subfolder of the result folder (i.e, the resolution methods used)
     folderName = Array{String, 1}()
@@ -356,8 +356,8 @@ function resultsArrayGAP()
     header *= " & \\textbf{PR} \\\\\\hline\n"
 
     footer = raw"""\hline\end{tabular}
-\end{center}
-"""
+	\end{center}
+	"""
     println(fout, header)
 
     # On each page an array will contain at most maxInstancePerPage lines with results
@@ -366,7 +366,7 @@ function resultsArrayGAP()
 
     # For each solved files
     for solvedInstance in keys(sortedSolvedInstances)
-		
+		println(solvedInstance)
         # If we do not start a new array on a new page
         if rem(id, maxInstancePerPage) == 0
             println(fout, footer, "\\newpage")
@@ -381,40 +381,38 @@ function resultsArrayGAP()
 
 
 		best_robust_value = typemax(Float64)
-
-        # For each resolution method
+        # For each resolution method : save the datas
         for method in folderName
-
             path = resultFolder * method * "/" * solvedInstance
-			println(path)
-
-            # If the instance has been solved by this method
+		    # If the instance has been solved by this method
             if isfile(path)
                 include(path)
-                print(fout, " & ", round(resolution_time, digits=2), " & ")
-
-                # if is_solved
-                    # print(fout, "\$\\checkmark\$ & ")
-				# else
-					# print(fout, "\$\\times\$ & ")
-                # end
-				
-				# print(fout, round(Int, Objective_Value))
-				
-				if Objective_Value < best_robust_value
+				if Objective_Value < best_robust_value && Objective_Value > 0
 					best_robust_value = Objective_Value
 				end
-				try
-					print(fout, round(GAP, digits=2))
-				catch err
-					print(fout, " - ")
+			end
+		end	
+			
+		for method in folderName
+            path = resultFolder * method * "/" * solvedInstance
+			# If the instance has been solved by this method
+            if isfile(path)
+				include(path)
+				print(fout, " & ", round(resolution_time, digits=2), " & ")
+				#GAP
+				if method == "dual"
+					print(fout, GAP)
+				elseif best_robust_value != typemax(Float64) && Objective_Value > 0
+					print(fout, round(100*(Objective_Value - best_robust_value)/best_robust_value, digits=2),"\\%")
+				elseif Objective_Value <= 0.0
+					print(fout, " 100\\% ")
 				end
-                
-            # If the instance has not been solved by this method
+			# If the instance has not been solved by this method
             else
                 println(fout, " & - & - ")
             end
-        end
+		end
+		
 		
 		#Static solution 
 		path = resultFolder * "/static/" * solvedInstance
@@ -544,7 +542,7 @@ function best_solutions()
 			# If the instance has been solved by this method
             if isfile(path)
                 include(path)    
-				if Objective_Value < best_value && Objective_Value != -1
+				if Objective_Value < best_value && Objective_Value > 0
 					best_value = Objective_Value
 					best_solution = solution
 					best_method = method
@@ -556,7 +554,7 @@ function best_solutions()
 				print(fout, string(solution) )
 			else
 				print(fout, string(solution[1:17]) * "\\\\")
-				print(fout, " & " * string(solution[1:end]))
+				print(fout, " & " * string(solution[18:end]))
 				id += 1
 			end
 		else
