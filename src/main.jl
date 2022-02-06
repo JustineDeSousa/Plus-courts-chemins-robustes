@@ -16,9 +16,9 @@ function solve_instances(method, maxTime::Float64)
 		outputFile = folder * "/" * SubString(file,1,length(file)-3) * ".res"
         
 		if !isfile(outputFile) #if the instance hasn't been solved already
-			sol, z_val, final_time, isOptimal, status = solve(method, file, maxTime)
+			sol, z_val, final_time, isOptimal, status, GAP = solve(method, file, maxTime)
             fout = open(outputFile, "w")
-            write_solution(fout, sol, z_val, final_time, isOptimal, status)
+            write_solution(fout, sol, z_val, final_time, isOptimal, status, GAP)
             close(fout)
         end
     end
@@ -27,7 +27,7 @@ end
 
 
 #methods_ = ["dual", "callBack", "cuttingPlane" , "heuristic"]
-methods_ = ["cuttingPlane"]
+methods_ = ["dual"]
 for meth in methods_
 	solve_instances(meth, 100.0)
 end

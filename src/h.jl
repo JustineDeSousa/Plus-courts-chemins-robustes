@@ -79,6 +79,7 @@ function slaveProblem_o(n::Int64,grandD::Array{Float64,2},d::Array{Float64,2},d1
     #solve
     set_optimizer_attribute(sp_o, "CPXPARAM_TimeLimit", maxTime)
     optimize!(sp_o)
+    #set_optimizer_attribute(sp_o, "CPXPARAM_TimeLimit", maxTime)
     delta1_aux=Array{Float64,2}(zeros(n,n))
     for i in 1:n
         for j in 1:n
@@ -101,6 +102,7 @@ function slaveProblem_1(n::Int64,p::Array{Int64,1},ph::Array{Int64,1},d2::Int64,
     #solve
     set_optimizer_attribute(sp_1, "CPXPARAM_TimeLimit", maxTime)
     optimize!(sp_1)
+    #set_optimizer_attribute(sp_1, "CPXPARAM_TimeLimit", maxTime)
     delta2_aux=Array{Int64,1}(zeros(n))
     for i in 1:n
         delta2_aux[i]=JuMP.value(delta2[i])
@@ -118,7 +120,7 @@ function solve(method::String,file::String,maxTime::Float64)
 	elseif method == "heuristic"
 		sol, z_val, final_time, isOptimal, status, GAP = heuristic(file, maxTime)
     end
-    return sol, z_val, final_time, isOptimal, status
+    return sol, z_val, final_time, isOptimal, status, GAP
 end
 function write_solution(fout, sol, objectiveValue, resolution_time::Float64, solved::Bool, status::String, GAP::Float64)
 	n = length(sol)
@@ -416,4 +418,7 @@ function resultsArray()
     println(fout, "\\end{document}")
     close(fout)
 end
-
+# function readHeuristique(fichier::String)
+#     if isfile(fichier)
+#         myFile = open(fichier)
+#         data = readlines(myFile)
