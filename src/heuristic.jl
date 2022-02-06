@@ -222,6 +222,9 @@ function heuristic(instance::String, max_time::Float64)
 		obj = obj_value(inst)
 	end
 	GAP = 0.0
+	if inst.res_time > max_time
+		GAP = 100.0
+	end
 	return inst.path_, obj, inst.res_time, inst.solved, " \"" * inst.diagnostic * "\"", GAP
 end
 
