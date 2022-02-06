@@ -17,10 +17,25 @@ function duale(instance::String, maxTime::Float64)
     set_time_limit_sec(m, maxTime)
     set_optimizer_attribute(m, "CPXPARAM_TimeLimit", maxTime)
     set_silent(m)
+	
+	#start value from the heuristic
+	instance = replace(instance, ".gr" => ".res")
+	include("../res/heuristic/$instance")
+	y_start = zeros(Int,n)
+	x_start = zeros(Int,n,n)
+	for i in 1:length(solution)-1
+		y_start[solution[i]] = 1
+		x_start[solution[i],solution[i+1]] = 1
+	end
+	y_start[solution[end]] = 1
+	set_optimizer_attribute(m, "CPX_PARAM_ADVIND", 2)
+	
     # #variables
     @variable(m, x[1:n , 1:n], Bin)
+	set_start_value.(x,x_start)
     @variable(m, beta[1:n , 1:n]>=0)
     @variable(m, y[1:n], Bin)
+	set_start_value.(y,y_start)
     @variable(m, alpha>=0)
     @variable(m, gamma>=0)
     @variable(m, epsilon[1:n]>=0)
@@ -38,7 +53,9 @@ function duale(instance::String, maxTime::Float64)
     @objective(m, Min, sum(d[i,j]*x[i,j]+grandD[i,j]*beta[i,j] for i in 1:n, j in 1:n if d[i,j]!=0 )+d1*alpha)
     #Solve model
     starting_time=time()
+	println("optimizing ...")
     optimize!(m)
+	println(" ... over !")
     final_time=time()-starting_time
     status = termination_status(m)
     isOptimal = status == MOI.OPTIMAL
@@ -70,14 +87,12 @@ function duale(instance::String, maxTime::Float64)
     #         end
     #     end   
     # end
-    status = """ "" """
     GAP = MOI.get(m, MOI.RelativeGap())
     # println("Cost: ",z_aux)
     return y_aux, z_aux, final_time, isOptimal, string(status), GAP
 
 end
-#instance="20_USA-road-d.BAY.gr"
-#duale("400_USA-road-d.BAY.gr",100.0)
+
 
 
 
