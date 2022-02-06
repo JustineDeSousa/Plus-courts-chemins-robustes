@@ -223,8 +223,4 @@ function heuristic(instance::String, max_time::Float64)
 	end
 	return inst.path_, obj, inst.res_time, inst.solved, " \"" * inst.diagnostic * "\""
 end
-<<<<<<< Updated upstream
 
-#instance = "60_USA-road-d.NY.gr"
-# instance = "instance_test.gr"
-# heuristic(instance, 100.0)
