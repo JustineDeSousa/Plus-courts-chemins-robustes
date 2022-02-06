@@ -9,7 +9,9 @@ function static(instance::String, maxTime::Float64)
     m=Model(CPLEX.Optimizer)
 	set_silent(m)
     JuMP.set_time_limit_sec(m, maxTime)
-	set_optimizer_attribute(m, "CPXPARAM_TimeLimit", maxTime) # seconds
+	set_optimizer_attribute(m, "CPX_PARAM_TILIM", maxTime) # seconds
+	set_optimizer_attribute(m, "CPX_PARAM_DETTILIM", maxTime) # seconds
+	set_optimizer_attribute(m, "CPX_PARAM_ADVIND", 2)	
 
     @variable(m, x[1:n , 1:n], Bin)
     @variable(m, y[1:n], Bin)
@@ -20,11 +22,15 @@ function static(instance::String, maxTime::Float64)
     @constraint(m, [i in 1:n; i!=s] ,sum(x[i,j] for j in 1:n if d[i,j]!=0)==y[i])
     @constraint(m, [i in 1:n; i!=t] ,sum(x[j,i] for j in 1:n if d[j,i]!=0)==y[i])
     @constraint(m, sum(p[i]*y[i] for i in 1:n) <=S)
+	@constraint(m, y[s] == 1)
+	@constraint(m, y[t] == 1)
 	
     @objective(m, Min, sum(d[i,j]*x[i,j] for i in 1:n, j in 1:n if d[i,j]!=0 ) )
     
     starting_time=time()
+	println("optimizing ...")
     optimize!(m)
+	println("... over !")
     final_time=time()-starting_time
   	solution = [ value.(x),	value.(y)]
 	
@@ -35,6 +41,6 @@ end
 
 
 
-
+#static("500_USA-road-d.NY.gr", 0.001)
 
 

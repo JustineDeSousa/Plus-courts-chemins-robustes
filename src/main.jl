@@ -27,10 +27,11 @@ function solve_instances(method, maxTime::Float64)
 end
 
 
-#methods_ = ["dual", "callBack", "cuttingPlane" , "heuristic"]
-methods_ = ["dual"]
+#SAVING INSTANCES
+methods_ = ["dual", "callBack", "cuttingPlane" , "heuristic"]
 for meth in methods_
-	solve_instances(meth, 100.0)
+	solve_instances(meth, 10.0)
 end
 performanceDiagram()
-resultsArray()
+resultsArrayGAP()
+best_solutions()
