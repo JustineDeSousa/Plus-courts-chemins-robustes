@@ -31,7 +31,7 @@ function modelCallback(instance::String, maxTime::Float64)
     @constraint(mp, [i in 1:n; i!=t] ,sum(x[j,i] for j in 1:n if d[j,i]!=0)==y[i])
     starting_time=time()
     function my_cb_function(cb_data::CPLEX.CallbackContext, context_id::Clong)
-        if context_id == CPX_CALLBACKCONTEXT_CANDIDATE && time()-starting_time<maxTime
+        if context_id == CPX_CALLBACKCONTEXT_CANDIDATE #&& time()-starting_time<maxTime+littleEp
             CPLEX.load_callback_variable_primal(cb_data, context_id)
             x_val = Array{Float64,2}(zeros(n,n))
             for i in 1:n
@@ -44,8 +44,8 @@ function modelCallback(instance::String, maxTime::Float64)
                 y_val[i] = callback_value(cb_data, y[i])
             end
             z_val = callback_value(cb_data, z)
-            delta1_aux, value_sp_o = slaveProblem_o(n,grandD,d,d1,x_val)
-            delta2_aux, value_sp_1 = slaveProblem_1(n,p,ph,d2,y_val)
+            delta1_aux, value_sp_o = slaveProblem_o(n,grandD,d,d1,x_val,maxTime)
+            delta2_aux, value_sp_1 = slaveProblem_1(n,p,ph,d2,y_val,maxTime)
             if value_sp_o > z_val+littleEp
                 con = @build_constraint(sum(d[i,j]*(1+delta1_aux[i,j])*x[i,j] for i in 1:n , j in 1:n if d[i,j]!=0)<=z)
                 MOI.submit(mp, MOI.LazyConstraint(cb_data), con)
@@ -58,40 +58,52 @@ function modelCallback(instance::String, maxTime::Float64)
             end
         end    
     end 
+    set_optimizer_attribute(mp, "CPXPARAM_TimeLimit", maxTime) # seconds
     MOI.set(mp, CPLEX.CallbackFunction(), my_cb_function)
     set_time_limit_sec(mp, maxTime)
     optimize!(mp)
     final_time=time()-starting_time
-    if final_time > maxTime+littleEp#value_sp_o > (z_aux+littleEp) || value_sp_1> (S+littleEp)
-        isOptimal = false
-        
-    else
-        status = termination_status(mp)
-        isOptimal = status == MOI.OPTIMAL
-    end
-    status = """ "" """
-    #status = termination_status(mp)
-    #isOptimal = status == MOI.OPTIMAL
-    x_val = Array{Float64,2}(zeros(n,n))
-    for i in 1:n
-        for j in 1:n
-            x_val[i,j] = JuMP.value(x[i,j])
+    status = termination_status(mp)
+    if status == MOI.OPTIMAL
+        if final_time > maxTime+littleEp#value_sp_o > (z_aux+littleEp) || value_sp_1> (S+littleEp)
+            isOptimal = false
+            
+        else
+            status = termination_status(mp)
+            isOptimal = status == MOI.OPTIMAL
         end
+        status = """ "" """
+        #status = termination_status(mp)
+        #isOptimal = status == MOI.OPTIMAL
+        x_val = Array{Float64,2}(zeros(n,n))
+        for i in 1:n
+            for j in 1:n
+                x_val[i,j] = JuMP.value(x[i,j])
+            end
+        end
+        y_val = Array{Float64,1}(zeros(n))
+        for i in 1:n
+            y_val[i] = JuMP.value(y[i])
+        end
+        z_val = JuMP.value(z)
+        # for i in 1:n
+        #     for j in 1:n
+        #         print(x_val[i,j]," ")
+        #     end
+        #     println("")
+        # end
+        # println("Cost: ",z_val)
+    else
+        x_val = Array{Float64,2}(zeros(n,n))
+        y_val = Array{Float64,1}(zeros(n))
+        z_val=0
+        status = """ "" """
+        isOptimal = status == MOI.OPTIMAL
+
+
     end
-    y_val = Array{Float64,1}(zeros(n))
-    for i in 1:n
-        y_val[i] = JuMP.value(y[i])
-    end
-    z_val = JuMP.value(z)
-    # for i in 1:n
-    #     for j in 1:n
-    #         print(x_val[i,j]," ")
-    #     end
-    #     println("")
-    # end
-    # println("Cost: ",z_val)
     return y_val, z_val, final_time, isOptimal, status
 end
 
-#instance="400_USA-road-d.BAY.gr"
+#instance="700_USA-road-d.BAY.gr"
 #modelCallback(instance,100.0)

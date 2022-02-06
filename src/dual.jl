@@ -15,6 +15,7 @@ function duale(instance::String, maxTime::Float64)
     #model creation
     m=Model(CPLEX.Optimizer)
     set_time_limit_sec(m, maxTime)
+    set_optimizer_attribute(m, "CPXPARAM_TimeLimit", maxTime)
     set_silent(m)
     # #variables
     @variable(m, x[1:n , 1:n], Bin)
@@ -69,6 +70,7 @@ function duale(instance::String, maxTime::Float64)
     #         end
     #     end   
     # end
+    status = """ "" """
     # println("Cost: ",z_aux)
     return y_aux, z_aux, final_time, isOptimal, status
 

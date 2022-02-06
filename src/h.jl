@@ -65,9 +65,10 @@ function read_(fichier)
     end
     return n,s,t,S,d1,d2,p,ph,d,grandD
 end
-function slaveProblem_o(n::Int64,grandD::Array{Float64,2},d::Array{Float64,2},d1::Int64,x_aux::Array{Float64,2})
+function slaveProblem_o(n::Int64,grandD::Array{Float64,2},d::Array{Float64,2},d1::Int64,x_aux::Array{Float64,2} ,maxTime::Float64)
     sp_o=Model(CPLEX.Optimizer)
     set_silent(sp_o)
+    set_time_limit_sec(sp_o, maxTime)
     #variables
     @variable(sp_o, delta1[1:n,1:n]>=0)
     #constraints
@@ -76,6 +77,7 @@ function slaveProblem_o(n::Int64,grandD::Array{Float64,2},d::Array{Float64,2},d1
     #objective function
     @objective(sp_o, Max, sum(d[i,j]*(1+delta1[i,j])*x_aux[i,j] for i in 1:n, j in 1:n if d[i,j]!=0))
     #solve
+    set_optimizer_attribute(sp_o, "CPXPARAM_TimeLimit", maxTime)
     optimize!(sp_o)
     delta1_aux=Array{Float64,2}(zeros(n,n))
     for i in 1:n
@@ -86,9 +88,10 @@ function slaveProblem_o(n::Int64,grandD::Array{Float64,2},d::Array{Float64,2},d1
     objective_spo=JuMP.objective_value(sp_o)
     return delta1_aux, objective_spo
 end
-function slaveProblem_1(n::Int64,p::Array{Int64,1},ph::Array{Int64,1},d2::Int64,y_aux::Array{Float64,1})
+function slaveProblem_1(n::Int64,p::Array{Int64,1},ph::Array{Int64,1},d2::Int64,y_aux::Array{Float64,1},maxTime::Float64)
     sp_1=Model(CPLEX.Optimizer)
     set_silent(sp_1)
+    set_time_limit_sec(sp_1, maxTime)
     #variables
     @variable(sp_1, 0<=delta2[1:n]<=2)
     #constraints
@@ -96,6 +99,7 @@ function slaveProblem_1(n::Int64,p::Array{Int64,1},ph::Array{Int64,1},d2::Int64,
     #objective function
     @objective(sp_1, Max, sum((p[i]+delta2[i]*ph[i])*y_aux[i] for i in 1:n))
     #solve
+    set_optimizer_attribute(sp_1, "CPXPARAM_TimeLimit", maxTime)
     optimize!(sp_1)
     delta2_aux=Array{Int64,1}(zeros(n))
     for i in 1:n

@@ -13,6 +13,7 @@ function cuttingPlane(instance::String, maxTime::Float64)
     #Master problem creation
     mp=Model(CPLEX.Optimizer)
     set_silent(mp)
+    set_time_limit_sec(mp, maxTime)
     #Variables
     @variable(mp, z>=0)
     @variable(mp, x[1:n , 1:n], Bin)
@@ -40,8 +41,8 @@ function cuttingPlane(instance::String, maxTime::Float64)
         y_aux[i]= JuMP.value(y[i])    
     end
     z_aux=JuMP.value(z)
-    delta1_aux, value_sp_o = slaveProblem_o(n,grandD,d,d1,x_aux)
-    delta2_aux, value_sp_1 = slaveProblem_1(n,p,ph,d2,y_aux)
+    delta1_aux, value_sp_o = slaveProblem_o(n,grandD,d,d1,x_aux,maxTime)
+    delta2_aux, value_sp_1 = slaveProblem_1(n,p,ph,d2,y_aux,maxTime)
     count=0
     while (value_sp_o > (z_aux+littleEp) || value_sp_1> (S+littleEp) ) && maxTime>(time()-starting_time+littleEp)
         #&& count<150
@@ -61,7 +62,7 @@ function cuttingPlane(instance::String, maxTime::Float64)
         #write_to_file(mp, "model.mps")
 
         optimize!(mp)
-        status = termination_status(mp)
+        #status = termination_status(mp)
         #println(status)
         for i in 1:n
             for j in 1:n
@@ -72,15 +73,15 @@ function cuttingPlane(instance::String, maxTime::Float64)
             y_aux[i] = JuMP.value(y[i])    
         end
         z_aux=JuMP.objective_value(mp)
-        delta1_aux, value_sp_o = slaveProblem_o(n,grandD,d,d1,x_aux)
-        delta2_aux, value_sp_1 = slaveProblem_1(n,p,ph,d2,y_aux)
+        delta1_aux, value_sp_o = slaveProblem_o(n,grandD,d,d1,x_aux, maxTime)
+        delta2_aux, value_sp_1 = slaveProblem_1(n,p,ph,d2,y_aux, maxTime)
         #println("sp_0: ", value_sp_o, " z: ", z_aux)
         #println("sp_1: ", value_sp_1, " S: ", S)
     end
     final_time=time()-starting_time
     if value_sp_o > (z_aux+littleEp) || value_sp_1> (S+littleEp)
         isOptimal = false
-        status = """ "" """
+        #status = """ "" """
     else
         status = termination_status(mp)
         isOptimal = status == MOI.OPTIMAL
@@ -95,8 +96,8 @@ function cuttingPlane(instance::String, maxTime::Float64)
     # println("Cost: ",z_aux)
     #println("Cost: ",z_aux-sum(d[i,j]*x_aux[i,j] for i in 1:n , j in 1:n if d[i,j]!=0))
     println(count)
-    
-    return y_val, z_val, final_time, isOptimal, status
+    status = """ "" """
+    return y_aux, z_aux, final_time, isOptimal, status
 
 end
 
