@@ -25,7 +25,8 @@ function solve_instances(method, maxTime::Float64)
     
 end
 
-methods_ = [ "cuttingPlane","dual", "heuristic"]
+
+methods_ = ["dual", "callBack", "cuttingPlane" , "heuristic"]
 # methods_ = ["heuristic"]
 for meth in methods_
 	solve_instances(meth, 100.0)

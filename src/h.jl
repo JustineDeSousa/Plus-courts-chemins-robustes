@@ -414,3 +414,5 @@ function resultsArray()
     println(fout, footer)
     println(fout, "\\end{document}")
     close(fout)
+end
+
