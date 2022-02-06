@@ -4,4 +4,3 @@
 deps/deps.jl
 *.gr
 instances/bigInstances/instance_test.txt
-*.res
