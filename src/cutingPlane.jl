@@ -98,6 +98,10 @@ function cuttingPlane(instance::String, maxTime::Float64)
     println(count)
     status = """ "" """
     return y_aux, z_aux, final_time, isOptimal, status
+=======
+    
+    return y_aux, z_aux, final_time, isOptimal, string(status)
+>>>>>>> Stashed changes
 
 end
 
