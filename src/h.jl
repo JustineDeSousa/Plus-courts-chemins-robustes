@@ -421,12 +421,12 @@ function resultsArrayGAP()
 		if isfile(path)
 			include(path)
 			#prix de la robustesse
-			if Objective_Value > 0	
-				PR = (best_robust_value - Objective_Value)/Objective_Value
+			if Objective_Value > 0 
+				PR = string(round((best_robust_value - Objective_Value)/Objective_Value, digits=2))
 			else
-				PR = best_robust_value
+				PR = " - "
 			end
-			print(fout, " & " * string(round(PR,digits=2)) * "\\%")
+			print(fout, " & " * PR * "\\%")
 		else
 			print(fout, " & - ")
 		end
@@ -443,7 +443,7 @@ function resultsArrayGAP()
 end
 
 function best_solutions()
-	   
+	println("--------- BEST SOLUTIONS ---------")
     resultFolder = "../res/"
     dataFolder = "../data/"
     
@@ -458,6 +458,7 @@ function best_solutions()
 
     # Print the latex file output
     println(fout, raw"""\documentclass[main.tex]{subfiles}
+	\newmargin{0.5cm}{3cm}
 	\begin{document}""")
 
     header = raw"""
@@ -504,15 +505,10 @@ function best_solutions()
 		enqueue!(sortedSolvedInstances, elmt, num)
 	end
 	
-
-    header *= "}\n\t\\hline\n"
-    header *= "\\\\\n\\textbf{Instance} "
-
-    # Create the header line with the content of the result columns
-    for folder in folderName
-		header *= " & \\textbf{Solution} & \\textbf{Valeur}"
-    end
-    header *= "\\\\\\hline\n"
+	# Create the header line with the content of the result columns
+    header *= raw"""}\hline
+	\textbf{Instance} & \textbf{Solution} & \textbf{Valeur} \\\hline
+	"""
 
     footer = raw"""\hline\end{tabular}
 	\end{center}
@@ -548,7 +544,7 @@ function best_solutions()
 			# If the instance has been solved by this method
             if isfile(path)
                 include(path)    
-				if Objective_Value < best_value
+				if Objective_Value < best_value && Objective_Value != -1
 					best_value = Objective_Value
 					best_solution = solution
 					best_method = method
@@ -556,7 +552,13 @@ function best_solutions()
             end
         end
 		if best_method == "heuristic"
-			print(fout, string(solution) )
+			if length(solution) < 20
+				print(fout, string(solution) )
+			else
+				print(fout, string(solution[1:17]) * "\\\\")
+				print(fout, " & " * string(solution[1:end]))
+				id += 1
+			end
 		else
 			print(fout, "[")
 			for i in 1:length(solution)
@@ -564,7 +566,12 @@ function best_solutions()
 					print(fout, string(i)*", ")
 				end
 			end
-			print(fout, "] & ")
+			print(fout, "]")
+		end
+		if best_value != typemax(Float64)
+			best_value = round(Int,best_value)
+		else
+			best_value = "\$+\\infty\$"
 		end
         println(fout, " & " * string(best_value) * "\\\\")
 
