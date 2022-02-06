@@ -63,6 +63,7 @@ function cuttingPlane(instance::String, maxTime::Float64)
         #write_to_file(mp, "model.mps")
 
         optimize!(mp)
+        set_optimizer_attribute(mp, "CPXPARAM_TimeLimit", maxTime)
         #status = termination_status(mp)
         #println(status)
         for i in 1:n
