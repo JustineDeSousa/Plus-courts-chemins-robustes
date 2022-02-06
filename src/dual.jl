@@ -71,8 +71,9 @@ function duale(instance::String, maxTime::Float64)
     #     end   
     # end
     status = """ "" """
+    GAP = MOI.get(m, MOI.RelativeGap())
     # println("Cost: ",z_aux)
-    return y_aux, z_aux, final_time, isOptimal, string(status)
+    return y_aux, z_aux, final_time, isOptimal, string(status), GAP
 
 end
 #instance="20_USA-road-d.BAY.gr"

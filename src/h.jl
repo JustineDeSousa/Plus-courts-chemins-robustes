@@ -110,17 +110,17 @@ function slaveProblem_1(n::Int64,p::Array{Int64,1},ph::Array{Int64,1},d2::Int64,
 end
 function solve(method::String,file::String,maxTime::Float64)
     if method=="callBack"
-        sol, z_val, final_time, isOptimal, status = modelCallback(file, maxTime)
+        sol, z_val, final_time, isOptimal, status, GAP = modelCallback(file, maxTime)
     elseif method== "cuttingPlane"
-        sol, z_val, final_time, isOptimal, status = cuttingPlane(file, maxTime)
+        sol, z_val, final_time, isOptimal, status, GAP = cuttingPlane(file, maxTime)
     elseif method=="dual"
-        sol, z_val, final_time, isOptimal, status = duale(file, maxTime)
+        sol, z_val, final_time, isOptimal, status, GAP = duale(file, maxTime)
 	elseif method == "heuristic"
-		sol, z_val, final_time, isOptimal, status = heuristic(file, maxTime)
+		sol, z_val, final_time, isOptimal, status, GAP = heuristic(file, maxTime)
     end
     return sol, z_val, final_time, isOptimal, status
 end
-function write_solution(fout, sol, objectiveValue, resolution_time::Float64, solved::Bool, status::String)
+function write_solution(fout, sol, objectiveValue, resolution_time::Float64, solved::Bool, status::String, GAP::Float64)
 	n = length(sol)
 	print(fout, "solution = [")
 	for i in 1:1:n-1
@@ -135,6 +135,7 @@ function write_solution(fout, sol, objectiveValue, resolution_time::Float64, sol
 	println(fout, "is_solved = " * string(solved))
 	println(fout, "status = " * status)
 	println(status)
+    println(fout, "GAP = "* string(GAP) )
 end
 
 function performanceDiagram()

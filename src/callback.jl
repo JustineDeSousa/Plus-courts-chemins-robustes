@@ -62,6 +62,7 @@ function modelCallback(instance::String, maxTime::Float64)
     MOI.set(mp, CPLEX.CallbackFunction(), my_cb_function)
     set_time_limit_sec(mp, maxTime)
     optimize!(mp)
+    GAP = MOI.get(mp, MOI.RelativeGap())
     final_time=time()-starting_time
     status = termination_status(mp)
     if status == MOI.OPTIMAL
@@ -102,7 +103,7 @@ function modelCallback(instance::String, maxTime::Float64)
 
 
     end
-    return y_val, z_val, final_time, isOptimal, status
+    return y_val, z_val, final_time, isOptimal, status, GAP
 end
 
 #instance="700_USA-road-d.BAY.gr"

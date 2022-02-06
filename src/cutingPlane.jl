@@ -13,7 +13,8 @@ function cuttingPlane(instance::String, maxTime::Float64)
     #Master problem creation
     mp=Model(CPLEX.Optimizer)
     set_silent(mp)
-    set_time_limit_sec(mp, maxTime)
+    #set_time_limit_sec(mp, maxTime)
+    set_optimizer_attribute(mp, "CPXPARAM_TimeLimit", maxTime)
     #Variables
     @variable(mp, z>=0)
     @variable(mp, x[1:n , 1:n], Bin)
@@ -78,6 +79,7 @@ function cuttingPlane(instance::String, maxTime::Float64)
         #println("sp_0: ", value_sp_o, " z: ", z_aux)
         #println("sp_1: ", value_sp_1, " S: ", S)
     end
+    GAP = MOI.get(mp, MOI.RelativeGap())
     final_time=time()-starting_time
     if value_sp_o > (z_aux+littleEp) || value_sp_1> (S+littleEp)
         isOptimal = false
@@ -97,7 +99,7 @@ function cuttingPlane(instance::String, maxTime::Float64)
     #println("Cost: ",z_aux-sum(d[i,j]*x_aux[i,j] for i in 1:n , j in 1:n if d[i,j]!=0))
     println(count)
 
-    return y_aux, z_aux, final_time, isOptimal, string(status)
+    return y_aux, z_aux, final_time, isOptimal, string(status), GAP
 
 end
 
