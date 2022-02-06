@@ -1,6 +1,4 @@
-using JuMP
-using CPLEX
-include("h.jl") 
+
 include("cutingPlane.jl")
 include("dual.jl")
 include("callback.jl")
@@ -28,6 +26,8 @@ function solve_instances(method, maxTime::Float64)
 end
 
 methods_ = [ "dual", "heuristic"]
+=======
+methods_ = ["dual", "callBack", "cuttingPlane" , "heuristic"]
 # methods_ = ["heuristic"]
 for meth in methods_
 	solve_instances(meth, 100.0)
