@@ -33,3 +33,4 @@ for meth in methods_
 	solve_instances(meth, 100.0)
 end
 performanceDiagram()
+resultsArray()
