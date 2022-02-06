@@ -73,6 +73,7 @@ function duale(instance::String, maxTime::Float64)
     status = """ "" """
     # println("Cost: ",z_aux)
     return y_aux, z_aux, final_time, isOptimal, status
+    return y_aux, z_aux, final_time, isOptimal, string(status)
 
 end
 #instance="20_USA-road-d.BAY.gr"
