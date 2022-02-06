@@ -35,3 +35,4 @@ end
 # end
 # performanceDiagram()
 resultsArrayGAP()
+best_solutions()

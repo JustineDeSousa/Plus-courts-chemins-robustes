@@ -440,7 +440,7 @@ function resultsArrayGAP()
     close(fout)
 end
 
-function best_solutions
+function best_solutions()
 	   
     resultFolder = "../res/"
     dataFolder = "../data/"
@@ -456,12 +456,12 @@ function best_solutions
 
     # Print the latex file output
     println(fout, raw"""\documentclass[main.tex]{subfiles}
-\begin{document}""")
+	\begin{document}""")
 
     header = raw"""
-\begin{center}
-\renewcommand{\arraystretch}{1.4} 
- \begin{tabular}{llr"""
+	\begin{center}
+	\renewcommand{\arraystretch}{1.4} 
+	\begin{tabular}{llr"""
 
     # Name of the subfolder of the result folder (i.e, the resolution methods used)
     folderName = Array{String, 1}()
@@ -513,8 +513,8 @@ function best_solutions
     header *= "\\\\\\hline\n"
 
     footer = raw"""\hline\end{tabular}
-\end{center}
-"""
+	\end{center}
+	"""
     println(fout, header)
 
     # On each page an array will contain at most maxInstancePerPage lines with results
@@ -554,8 +554,17 @@ function best_solutions
             end
         end
 		if best_method == "heuristic"
-			print(fout, string(solution))
-        println(fout, "\\\\")
+			print(fout, string(solution) )
+		else
+			print(fout, "[")
+			for i in 1:length(solution)
+				if solution[i] > 0
+					print(fout, string(i)*", ")
+				end
+			end
+			print(fout, "] & ")
+		end
+        println(fout, " & " * string(best_value) * "\\\\")
 
         id += 1
     end
