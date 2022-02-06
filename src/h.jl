@@ -158,7 +158,7 @@ Prerequisites:
     # For each file in the result folder
     for file in readdir(resultFolder)
         path = resultFolder * file
-        if isdir(path)	# If it is a subfolder
+        if isdir(path) && file != "static"	# If it is a subfolder other than static
             folderName = vcat(folderName, file)
             subfolderCount += 1
             folderSize = size(readdir(path), 1)
@@ -184,7 +184,7 @@ Prerequisites:
     # For each subfolder
     for file in readdir(resultFolder)
         path = resultFolder * file
-        if isdir(path)
+        if isdir(path) && file != "static"
             folderCount += 1
             fileCount = 0
             # For each text file in the subfolder
@@ -257,166 +257,6 @@ Prerequisites:
     end
 end 
 
-"""
-Create a latex file which contains an array with the results of the ../res folder.
-Each subfolder of the ../res folder contains the results of a resolution method.
-
-Arguments
-- outputFile: path of the output file
-
-Prerequisites:
-- Each subfolder must contain text files
-- Each text file correspond to the resolution of one instance
-"""
-function resultsArray()
-    
-    resultFolder = "../res/"
-    dataFolder = "../data/"
-    
-    # Maximal number of files in a subfolder
-    maxSize = 0
-
-    # Number of subfolders
-    subfolderCount = 0
-
-    # Open the latex output file
-    fout = open("../resultsArray.tex", "w")
-
-    # Print the latex file output
-    println(fout, raw"""\documentclass[main.tex]{subfiles}
-\margin{0.5cm}{3cm}
-\begin{document}""")
-
-    header = raw"""
-\begin{landscape}
-\begin{center}
-\renewcommand{\arraystretch}{1.4} 
- \begin{tabular}{l"""
-
-    # Name of the subfolder of the result folder (i.e, the resolution methods used)
-    folderName = Array{String, 1}()
-
-    # List of all the instances solved by at least one resolution method
-    solvedInstances = Array{String, 1}()
-
-    # For each file in the result folder
-    for file in readdir(resultFolder)
-
-        path = resultFolder * file
-        
-        # If it is a subfolder
-        if isdir(path)
-            # Add its name to the folder list
-            folderName = vcat(folderName, file)
-            subfolderCount += 1
-            folderSize = size(readdir(path), 1)
-
-            # Add all its files in the solvedInstances array
-            for file2 in filter(x->occursin(".res", x), readdir(path))
-                solvedInstances = vcat(solvedInstances, file2)
-            end 
-
-            if maxSize < folderSize
-                maxSize = folderSize
-            end
-        end
-    end
-
-    # Only keep one string for each instance solved
-    solvedInstances = unique(solvedInstances)
-	sortedSolvedInstances = PriorityQueue{String, Int}()
-	for elmt in solvedInstances
-		num = parse(Int, split(elmt, "_")[1])
-		enqueue!(sortedSolvedInstances, elmt, num)
-	end
-	
-	
-    # For each resolution method, add two columns in the array
-    for folder in folderName
-        header *= "ccc"
-    end
-
-    header *= "}\n\t\\hline\n"
-
-    # Create the header line which contains the methods name
-    for folder in folderName
-        header *= " & \\multicolumn{3}{c}{\\textbf{" * folder * "}}"
-    end
-
-    header *= "\\\\\n\\textbf{Instance} "
-
-    # Create the second header line with the content of the result columns
-    for folder in folderName
-		if folder  == "heuristic"
-			header *= " & \\textbf{Temps (s)} & \\textbf{Solution ?} & \\textbf{Valeur}"
-		else
-			header *= " & \\textbf{Temps (s)} & \\textbf{Optimal ?} & \\textbf{Valeur}"
-		end
-        
-    end
-
-    header *= "\\\\\\hline\n"
-
-    footer = raw"""\hline\end{tabular}
-\end{center}
-\end{landscape}
-"""
-    println(fout, header)
-
-    # On each page an array will contain at most maxInstancePerPage lines with results
-    maxInstancePerPage = 31
-    id = 1
-
-    # For each solved files
-    for solvedInstance in keys(sortedSolvedInstances)
-		
-        # If we do not start a new array on a new page
-        if rem(id, maxInstancePerPage) == 0
-            println(fout, footer, "\\newpage")
-            println(fout, header)
-        end 
-
-		instance = split(solvedInstance, "_")
-		num_instance = instance[1]
-		city = split(instance[2], ".")[2]
-        # Replace the potential underscores '_' in file names
-        print(fout, num_instance*"\\_"*city)
-
-        # For each resolution method
-        for method in folderName
-
-            path = resultFolder * method * "/" * solvedInstance
-
-            # If the instance has been solved by this method
-            if isfile(path)
-                include(path)
-
-                print(fout, " & ", round(resolution_time, digits=2), " & ")
-
-                if is_solved
-                    print(fout, "\$\\checkmark\$ & ")
-				else
-					print(fout, "\$\\times\$ & ")
-                end
-				
-				print(fout, round(Int, Objective_Value))
-                
-            # If the instance has not been solved by this method
-            else
-                println(fout, " & - & - & - ")
-            end
-        end
-
-        println(fout, "\\\\")
-
-        id += 1
-    end
-
-    # Print the end of the latex file
-    println(fout, footer)
-    println(fout, "\\end{document}")
-    close(fout)
-end
 
 """
 Create a latex file which contains an array with the results of the ../res folder.
@@ -445,7 +285,6 @@ function resultsArrayGAP()
 
     # Print the latex file output
     println(fout, raw"""\documentclass[main.tex]{subfiles}
-\margin{0.5cm}{3cm}
 \begin{document}""")
 
     header = raw"""
@@ -520,7 +359,7 @@ function resultsArrayGAP()
     println(fout, header)
 
     # On each page an array will contain at most maxInstancePerPage lines with results
-    maxInstancePerPage = 31
+    maxInstancePerPage = 35
     id = 1
 
     # For each solved files
@@ -599,5 +438,132 @@ function resultsArrayGAP()
     println(fout, footer)
     println(fout, "\\end{document}")
     close(fout)
+end
+
+function best_solutions
+	   
+    resultFolder = "../res/"
+    dataFolder = "../data/"
+    
+    # Maximal number of files in a subfolder
+    maxSize = 0
+
+    # Number of subfolders
+    subfolderCount = 0
+
+    # Open the latex output file
+    fout = open("../best_solutions.tex", "w")
+
+    # Print the latex file output
+    println(fout, raw"""\documentclass[main.tex]{subfiles}
+\begin{document}""")
+
+    header = raw"""
+\begin{center}
+\renewcommand{\arraystretch}{1.4} 
+ \begin{tabular}{llr"""
+
+    # Name of the subfolder of the result folder (i.e, the resolution methods used)
+    folderName = Array{String, 1}()
+
+    # List of all the instances solved by at least one resolution method
+    solvedInstances = Array{String, 1}()
+
+    # For each file in the result folder
+    for file in readdir(resultFolder)
+
+        path = resultFolder * file
+        
+        # If it is a subfolder
+        if isdir(path)
+			folderSize = 0
+            # Add its name to the folder list
+			if !(file == "static")
+				folderName = vcat(folderName, file)
+				subfolderCount += 1
+				folderSize = size(readdir(path), 1)
+			end
+            # Add all its files in the solvedInstances array
+            for file2 in filter(x->occursin(".res", x), readdir(path))
+                solvedInstances = vcat(solvedInstances, file2)
+            end 
+
+            if maxSize < folderSize
+                maxSize = folderSize
+            end
+        end
+    end
+
+    # Only keep one string for each instance solved
+    solvedInstances = unique(solvedInstances)
+	sortedSolvedInstances = PriorityQueue{String, Int}()
+	for elmt in solvedInstances
+		num = parse(Int, split(elmt, "_")[1])
+		enqueue!(sortedSolvedInstances, elmt, num)
+	end
+	
+
+    header *= "}\n\t\\hline\n"
+    header *= "\\\\\n\\textbf{Instance} "
+
+    # Create the header line with the content of the result columns
+    for folder in folderName
+		header *= " & \\textbf{Solution} & \\textbf{Valeur}"
+    end
+    header *= "\\\\\\hline\n"
+
+    footer = raw"""\hline\end{tabular}
+\end{center}
+"""
+    println(fout, header)
+
+    # On each page an array will contain at most maxInstancePerPage lines with results
+    maxInstancePerPage = 35
+    id = 1
+
+    # For each solved files
+    for solvedInstance in keys(sortedSolvedInstances)
+		
+        # If we do not start a new array on a new page
+        if rem(id, maxInstancePerPage) == 0
+            println(fout, footer, "\\newpage")
+            println(fout, header)
+        end 
+
+		instance = split(solvedInstance, "_")
+		num_instance = instance[1]
+		city = split(instance[2], ".")[2]
+        # Replace the potential underscores '_' in file names
+        print(fout, num_instance * "\\_" * city * " & ")
+
+
+		best_value = typemax(Float64)
+		best_solution = nothing
+		best_method = "heuristic"
+        # For each resolution method
+        for method in folderName
+            path = resultFolder * method * "/" * solvedInstance
+			# If the instance has been solved by this method
+            if isfile(path)
+                include(path)    
+				if Objective_Value < best_value
+					best_value = Objective_Value
+					best_solution = solution
+					best_method = method
+				end              
+            end
+        end
+		if best_method == "heuristic"
+			print(fout, string(solution))
+        println(fout, "\\\\")
+
+        id += 1
+    end
+
+    # Print the end of the latex file
+    println(fout, footer)
+    println(fout, "\\end{document}")
+    close(fout)
+
 end
 
