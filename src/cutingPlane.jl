@@ -81,7 +81,7 @@ function cuttingPlane(instance::String, maxTime::Float64)
     final_time=time()-starting_time
     if value_sp_o > (z_aux+littleEp) || value_sp_1> (S+littleEp)
         isOptimal = false
-        #status = """ "" """
+        status = termination_status(mp)
     else
         status = termination_status(mp)
         isOptimal = status == MOI.OPTIMAL
@@ -96,8 +96,8 @@ function cuttingPlane(instance::String, maxTime::Float64)
     # println("Cost: ",z_aux)
     #println("Cost: ",z_aux-sum(d[i,j]*x_aux[i,j] for i in 1:n , j in 1:n if d[i,j]!=0))
     println(count)
-    status = """ "" """
-    return y_aux, z_aux, final_time, isOptimal, status
+
+    return y_aux, z_aux, final_time, isOptimal, string(status)
 
 end
 

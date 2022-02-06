@@ -217,13 +217,10 @@ function heuristic(instance::String, max_time::Float64)
 	inst.res_time = time() - start
 	obj = 0
 	if length(inst.path_) == 0
-		obj == -1
+		obj = -1
 	else
-		obj == obj_value(inst)
+		obj = obj_value(inst)
 	end
 	return inst.path_, obj, inst.res_time, inst.solved, " \"" * inst.diagnostic * "\""
 end
 
-#instance = "60_USA-road-d.NY.gr"
-# instance = "instance_test.gr"
-# heuristic(instance, 100.0)
