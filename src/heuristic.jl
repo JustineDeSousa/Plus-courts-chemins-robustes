@@ -111,7 +111,7 @@ function a_star_algorithm(inst::Instance, max_time::Float64)
 				inst.delta = zeros(Int,length(inst.path_))
 			end
 			
-			weight = sum(inst.p[i] for i in inst.path_) + sum(inst.poids[i] for i in length(inst.path_))
+			weight = sum(inst.p[i] for i in inst.path_) + sum(inst.poids[i]*inst.ph[i] for i in length(inst.path_))
 			
 			if weight > inst.S
 				inst.solved = false
@@ -175,7 +175,7 @@ function repare_poids!(inst::Instance)
 	set_silent(model)
 	@variable(model, poids[1:length(inst.path_)] >= 0)
 	@constraint(model, sum(poids) <= inst.d2)
-	@constraint(model, [k=1:length(inst.path_)], poids[k] <= 2*inst.ph[inst.path_[k]] )
+	@constraint(model, [k=1:length(inst.path_)], poids[k] <= 2 )
 	@objective(model, Max, sum(poids))
 	optimize!(model)
 	inst.poids = value.(poids)
@@ -222,6 +222,9 @@ function heuristic(instance::String, max_time::Float64)
 		obj = obj_value(inst)
 	end
 	GAP = 0.0
+	if inst.res_time > max_time
+		GAP = 100.0
+	end
 	return inst.path_, obj, inst.res_time, inst.solved, " \"" * inst.diagnostic * "\"", GAP
 end
 

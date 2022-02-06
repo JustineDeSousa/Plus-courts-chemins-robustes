@@ -5,8 +5,9 @@ include("h.jl")
 function static(instance::String, maxTime::Float64)
 
     n,s,t,S,d1,d2,p,ph,d,grandD = read_("../instances/$instance")
-    #model creation
+
     m=Model(CPLEX.Optimizer)
+	set_silent(m)
     JuMP.set_time_limit_sec(m, maxTime)
 	set_optimizer_attribute(m, "CPXPARAM_TimeLimit", maxTime) # seconds
 
@@ -23,18 +24,14 @@ function static(instance::String, maxTime::Float64)
     @objective(m, Min, sum(d[i,j]*x[i,j] for i in 1:n, j in 1:n if d[i,j]!=0 ) )
     
     starting_time=time()
-	println("starting")
     optimize!(m)
-	println("end")
     final_time=time()-starting_time
   	solution = [ value.(x),	value.(y)]
 	
-    return solution, objective_value(m), final_time, termination_status(m) == MOI.OPTIMAL, string(termination_status(m))
+    return solution, objective_value(m), final_time, termination_status(m) == MOI.OPTIMAL, string(termination_status(m)), MOI.get(m, MOI.RelativeGap())
 
 end
 
-instance="20_USA-road-d.BAY.gr"
-static(instance,10.0)
 
 
 
