@@ -37,14 +37,14 @@ mutable struct Instance
 	
 	#Constructeur
 	function Instance(instance::String)
-		n,s,t,S,d1,d2,p,ph,d,D = read_("../instances/$instance")
-		# include("../instances/$instance")
-		# d = Array{Float64,2}(zeros(n,n)) 
-		# D = Array{Float64,2}(zeros(n,n))
-		# for i in 1:size(Mat,1)
-			# d[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,3]
-			# D[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,4]
-		# end
+		# n,s,t,S,d1,d2,p,ph,d,D = read_("../instances/$instance")
+		include("../instances/$instance")
+		d = Array{Float64,2}(zeros(n,n)) 
+		D = Array{Float64,2}(zeros(n,n))
+		for i in 1:size(Mat,1)
+			d[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,3]
+			D[Int(Mat[i,1]),Int(Mat[i,2])]=Mat[i,4]
+		end
 		nodes = []
 		for i in 1:n
 			push!(nodes, Noeud(i))
@@ -87,7 +87,11 @@ function a_star_algorithm(inst::Instance, max_time::Float64)
 	start = time()
 	
 	while length(open_list) > 0 && time() - start < max_time
+		println("open_list = ", open_list)
+		println("closed_list = ", closed_list)
+		
 		current_nd = dequeue!(open_list) #noeud de plus petit score
+		println("current_nd = ", current_nd)
 		
 		if current_nd == inst.t #we've reached the end
 			inst.solved = true
@@ -125,20 +129,27 @@ function a_star_algorithm(inst::Instance, max_time::Float64)
 												# round(duration, digits=2), " -- TOTAL = ", weight+duration)
 				
 			end
+			println(inst.path_)
+			for i in inst.path_
+				println(i," -> ", inst.p[i])
+			end
+			println("somme P = " , sum(inst.p[i] for i in inst.path_))
 			return inst
 		end
 		
 		for node in neighbours(current_nd, inst)
+			println("neighbours : ", neighbours(current_nd, inst))
 			# distance of the path_ from start to node by current_nd (minimal and robust)
 			score_duree = inst.nodes[current_nd].score_duree + inst.d[current_nd, node]*(1+inst.D[current_nd, node])
 			score_poids = inst.nodes[current_nd].score_poids + inst.p[node] 
 			score_poids_ph = score_poids + 2*inst.ph[node]			
 			score = score_poids_ph + score_duree
 			
-			if inst.nodes[node].score_duree +  inst.nodes[node].score_poids <= score #On a déjà trouvé un meilleur chemin par current_nd to node
+			if (inst.nodes[node].score_duree +  inst.nodes[node].score_poids <= score) && !(node in closed_list)#On a déjà trouvé un meilleur chemin par current_nd to node
+				println("1st if")
 				continue
 			elseif score_poids > inst.S
-				# println("\t",score_poids , " > ", inst.S)				
+				println("\t",score_poids , " > ", inst.S)				
 				continue			
 			else # On a trouvé chemin depuis current_nd vers node qui ne dépasse pas S et de meilleur score
 				inst.nodes[node].score_duree = score_duree
