@@ -3,4 +3,3 @@
 *.jl.mem
 deps/deps.jl
 *.gr
-*.res
