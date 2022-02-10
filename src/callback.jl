@@ -104,6 +104,7 @@ function modelCallback(instance::String, maxTime::Float64)
             end
         end
     else
+        arcs=Array{Tuple{Int64,Int64},1}(undef,0)
         x_val = Array{Float64,2}(zeros(n,n))
         y_val = Array{Float64,1}(zeros(n))
         z_val=0
