@@ -19,14 +19,20 @@ function cuttingPlane(instance::String, maxTime::Float64)
     @variable(mp, z>=0)
     @variable(mp, x[1:n , 1:n], Bin)
     @variable(mp, y[1:n], Bin)
+    @variable(mp, l[1:n]>=0, Int)
     #objective function
     @objective(mp, Min, z)
     #constraints
     @constraint(mp, [j in 1:n ; j != s && j != t], sum( x[i,j] for i in 1:n if d[i,j]!=0) == sum(x[j,i] for i in 1:n if d[j,i]!=0))
     @constraint(mp, sum(x[s,j] for j in 1:n if d[s,j]!=0 )==1)
     @constraint(mp, sum(x[j,t] for j in 1:n if d[j,t]!=0)==1)
-    @constraint(mp, [i in 1:n; i!=s] ,sum(x[i,j] for j in 1:n if d[i,j]!=0)==y[i])
-    @constraint(mp, [i in 1:n; i!=t] ,sum(x[j,i] for j in 1:n if d[j,i]!=0)==y[i])
+    @constraint(mp, [i in 1:n; i!=s && i !=t] ,sum(x[i,j] for j in 1:n if d[i,j]!=0)==y[i])
+    @constraint(mp, [i in 1:n; i!=s && i !=t] ,sum(x[j,i] for j in 1:n if d[j,i]!=0)==y[i])  
+    @constraint(mp, y[s] == 1)
+	@constraint(mp, y[t] == 1)
+    @constraint(mp, [i in 1:n, j in 1:n; i!=j], l[j]>=l[i]+1-grandM*(1-x[i,j]))
+    @constraint(mp, sum(x[j,s] for j in 1:n if d[j,s]!=0 )==0)
+    @constraint(mp, sum(x[t,j] for j in 1:n if d[t,j]!=0)==0)
     #we solve the master problem
     starting_time=time()
     optimize!(mp)
@@ -89,18 +95,20 @@ function cuttingPlane(instance::String, maxTime::Float64)
         status = termination_status(mp)
         isOptimal = status == MOI.OPTIMAL
     end
-    # for i in 1:n
-    #     for j in 1:n
-    #         if x_aux[i,j]!=0
-    #             println("arc: ", (i,j))
-    #         end
-    #     end
-    # end
-    # println("Cost: ",z_aux)
+    arcs=Array{Tuple{Int64,Int64},1}(undef,0)
+    for i in 1:n
+        for j in 1:n
+            if x_aux[i,j]!=0
+                push!(arcs,(i,j))
+                println("arc: ", (i,j))
+            end
+        end
+    end
+    println("Cost: ",z_aux)
     #println("Cost: ",z_aux-sum(d[i,j]*x_aux[i,j] for i in 1:n , j in 1:n if d[i,j]!=0))
     println(count)
 
-    return y_aux, z_aux, final_time, isOptimal, string(status), GAP
+    return y_aux, z_aux, final_time, isOptimal, string(status), float(GAP)
 
 end
 

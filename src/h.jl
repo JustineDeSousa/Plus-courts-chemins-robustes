@@ -1,4 +1,5 @@
 using Plots
+grandM=100000
 
 littleEp=0.000001
 function read_(fichier)

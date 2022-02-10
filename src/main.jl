@@ -28,21 +28,21 @@ end
 
 
 #SAVING INSTANCES
-# methods_ = ["dual", "callBack", "cuttingPlane" , "heuristic"]
-# for meth in methods_
-	# solve_instances(meth, 10.0)
-# end
-# performanceDiagram()
-# resultsArrayGAP()
-# best_solutions()
+methods_ = ["dual", "callBack", "cuttingPlane" , "heuristic"]
+for meth in methods_
+	solve_instances(meth, 100.0)
+end
+performanceDiagram()
+resultsArrayGAP()
+best_solutions()
 
-println("Insert name of file to solve")
-instance = readline(stdin)
-println("Choose a method (dual, callBack, cuttingPlane , heuristic")
-method = readline(stdin)
-sol, z_val, final_time, isOptimal, status, GAP=solve(method,instance,100.0)
-println("solution : ",sol)
-println("************************")
-println("Optimal value : ", z_val)
-println("************************")
-println("Is Optimal : ", isOptimal)
+# println("Insert name of file to solve")
+# instance = readline(stdin)
+# println("Choose a method (dual, callBack, cuttingPlane , heuristic")
+# method = readline(stdin)
+# sol, z_val, final_time, isOptimal, status, GAP=solve(method,instance,100.0)
+# println("solution : ",sol)
+# println("************************")
+# println("Optimal value : ", z_val)
+# println("************************")
+# println("Is Optimal : ", isOptimal)
