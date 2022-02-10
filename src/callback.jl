@@ -28,8 +28,8 @@ function modelCallback(instance::String, maxTime::Float64)
     @constraint(mp, [j in 1:n ; j != s && j != t], sum( x[i,j] for i in 1:n if d[i,j]!=0) == sum(x[j,i] for i in 1:n if d[i,j]!=0))
     @constraint(mp, sum(x[s,j] for j in 1:n if d[s,j]!=0 )==1)
     @constraint(mp, sum(x[j,t] for j in 1:n if d[j,t]!=0)==1)
-    @constraint(mp, [i in 1:n; i!=s] ,sum(x[i,j] for j in 1:n if d[i,j]!=0)==y[i])
-    @constraint(mp, [i in 1:n; i!=t] ,sum(x[j,i] for j in 1:n if d[j,i]!=0)==y[i])
+    @constraint(mp, [i in 1:n; i!=s && i !=t] ,sum(x[i,j] for j in 1:n if d[i,j]!=0)==y[i])
+    @constraint(mp, [i in 1:n; i!=s && i !=t] ,sum(x[j,i] for j in 1:n if d[j,i]!=0)==y[i])  
     @constraint(mp, y[s] == 1)
 	@constraint(mp, y[t] == 1)
     @constraint(mp, [i in 1:n, j in 1:n; i!=j], l[j]>=l[i]+1-grandM*(1-x[i,j]))
@@ -39,6 +39,7 @@ function modelCallback(instance::String, maxTime::Float64)
     function my_cb_function(cb_data::CPLEX.CallbackContext, context_id::Clong)
         if context_id == CPX_CALLBACKCONTEXT_CANDIDATE && time()-starting_time<maxTime+littleEp
             CPLEX.load_callback_variable_primal(cb_data, context_id)
+            println("AAAAAAAAAAAAAAAAAAAAAAAAAA")
             x_val = Array{Float64,2}(zeros(n,n))
             for i in 1:n
                 for j in 1:n
@@ -68,7 +69,7 @@ function modelCallback(instance::String, maxTime::Float64)
     MOI.set(mp, CPLEX.CallbackFunction(), my_cb_function)
     set_time_limit_sec(mp, maxTime)
     optimize!(mp)
-    GAP = MOI.get(mp, MOI.RelativeGap())
+    #GAP = MOI.get(mp, MOI.RelativeGap())
     final_time=time()-starting_time
     status = termination_status(mp)
     if status == MOI.OPTIMAL
@@ -109,7 +110,8 @@ function modelCallback(instance::String, maxTime::Float64)
 
 
     end
-    return y_val, z_val, final_time, isOptimal, status, GAP
+    GAP=0.0
+    return y_val, z_val, final_time, isOptimal, status, float(GAP)
 end
 
 #instance="700_USA-road-d.BAY.gr"

@@ -26,8 +26,8 @@ function cuttingPlane(instance::String, maxTime::Float64)
     @constraint(mp, [j in 1:n ; j != s && j != t], sum( x[i,j] for i in 1:n if d[i,j]!=0) == sum(x[j,i] for i in 1:n if d[j,i]!=0))
     @constraint(mp, sum(x[s,j] for j in 1:n if d[s,j]!=0 )==1)
     @constraint(mp, sum(x[j,t] for j in 1:n if d[j,t]!=0)==1)
-    @constraint(mp, [i in 1:n; i!=s] ,sum(x[i,j] for j in 1:n if d[i,j]!=0)==y[i])
-    @constraint(mp, [i in 1:n; i!=t] ,sum(x[j,i] for j in 1:n if d[j,i]!=0)==y[i])
+    @constraint(mp, [i in 1:n; i!=s && i !=t] ,sum(x[i,j] for j in 1:n if d[i,j]!=0)==y[i])
+    @constraint(mp, [i in 1:n; i!=s && i !=t] ,sum(x[j,i] for j in 1:n if d[j,i]!=0)==y[i])  
     @constraint(mp, y[s] == 1)
 	@constraint(mp, y[t] == 1)
     @constraint(mp, [i in 1:n, j in 1:n; i!=j], l[j]>=l[i]+1-grandM*(1-x[i,j]))
@@ -108,7 +108,7 @@ function cuttingPlane(instance::String, maxTime::Float64)
     #println("Cost: ",z_aux-sum(d[i,j]*x_aux[i,j] for i in 1:n , j in 1:n if d[i,j]!=0))
     println(count)
 
-    return y_aux, z_aux, final_time, isOptimal, string(status), GAP
+    return y_aux, z_aux, final_time, isOptimal, string(status), float(GAP)
 
 end
 

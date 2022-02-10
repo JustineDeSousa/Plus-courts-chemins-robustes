@@ -30,7 +30,7 @@ end
 #SAVING INSTANCES
 methods_ = ["dual", "callBack", "cuttingPlane" , "heuristic"]
 for meth in methods_
-	solve_instances(meth, 10.0)
+	solve_instances(meth, 100.0)
 end
 performanceDiagram()
 resultsArrayGAP()

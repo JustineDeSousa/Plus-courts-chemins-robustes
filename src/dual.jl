@@ -103,15 +103,15 @@ function duale(instance::String, maxTime::Float64)
         y_aux=Vector{Float64}(undef,0)
         x_aux=Array{Float64,2}(zeros(n,n))
         z_aux=0
-        GAP=100
+        GAP=100.0
     end
 
     # println("Cost: ",z_aux)
-    return y_aux, z_aux, final_time, isOptimal, string(status), GAP
+    return y_aux, z_aux, final_time, isOptimal, string(status), float(GAP)
 
 end
-instance="20_USA-road-d.BAY.gr"
-duale(instance,100.0)
+#instance="20_USA-road-d.BAY.gr"
+#duale(instance,100.0)
 
 
 
