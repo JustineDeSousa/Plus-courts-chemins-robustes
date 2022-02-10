@@ -94,13 +94,15 @@ function modelCallback(instance::String, maxTime::Float64)
             y_val[i] = JuMP.value(y[i])
         end
         z_val = JuMP.value(z)
-        # for i in 1:n
-        #     for j in 1:n
-        #         print(x_val[i,j]," ")
-        #     end
-        #     println("")
-        # end
-        # println("Cost: ",z_val)
+        arcs=Array{Tuple{Int64,Int64},1}(undef,0)
+        for i in 1:n
+            for j in 1:n
+                if x_val[i,j]!=0
+                    push!(arcs,(i,j))
+                    println("arc: ", (i,j))
+                end
+            end
+        end
     else
         x_val = Array{Float64,2}(zeros(n,n))
         y_val = Array{Float64,1}(zeros(n))
@@ -111,7 +113,7 @@ function modelCallback(instance::String, maxTime::Float64)
 
     end
     GAP=0.0
-    return y_val, z_val, final_time, isOptimal, status, float(GAP)
+    return arcs, z_val, final_time, isOptimal, status, float(GAP)
 end
 
 #instance="700_USA-road-d.BAY.gr"

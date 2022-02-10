@@ -91,12 +91,14 @@ function duale(instance::String, maxTime::Float64)
             append!(y_aux, JuMP.value(y[i]))    
         end
         z_aux=JuMP.objective_value(m)
+        arcs=Array{Tuple{Int64,Int64},1}(undef,0)
         for i in 1:n
             for j in 1:n
                 if x_aux[i,j]!=0
+                    push!(arcs,(i,j))
                     println("arc: ", (i,j))
                 end
-            end   
+            end
         end
         GAP = MOI.get(m, MOI.RelativeGap())
     else
@@ -107,7 +109,7 @@ function duale(instance::String, maxTime::Float64)
     end
 
     # println("Cost: ",z_aux)
-    return y_aux, z_aux, final_time, isOptimal, string(status), float(GAP)
+    return arcs, z_aux, final_time, isOptimal, string(status), float(GAP)
 
 end
 #instance="20_USA-road-d.BAY.gr"
