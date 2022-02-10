@@ -21,6 +21,7 @@ function modelCallback(instance::String, maxTime::Float64)
     @variable(mp, z>=0)
     @variable(mp, x[1:n , 1:n], Bin)
     @variable(mp, y[1:n], Bin)
+    @variable(mp, l[1:n]>=0, Int)
     #objective function
     @objective(mp, Min, z)
     #constraints
@@ -29,9 +30,14 @@ function modelCallback(instance::String, maxTime::Float64)
     @constraint(mp, sum(x[j,t] for j in 1:n if d[j,t]!=0)==1)
     @constraint(mp, [i in 1:n; i!=s] ,sum(x[i,j] for j in 1:n if d[i,j]!=0)==y[i])
     @constraint(mp, [i in 1:n; i!=t] ,sum(x[j,i] for j in 1:n if d[j,i]!=0)==y[i])
+    @constraint(mp, y[s] == 1)
+	@constraint(mp, y[t] == 1)
+    @constraint(mp, [i in 1:n, j in 1:n; i!=j], l[j]>=l[i]+1-grandM*(1-x[i,j]))
+    @constraint(mp, sum(x[j,s] for j in 1:n if d[j,s]!=0 )==0)
+    @constraint(mp, sum(x[t,j] for j in 1:n if d[t,j]!=0)==0)
     starting_time=time()
     function my_cb_function(cb_data::CPLEX.CallbackContext, context_id::Clong)
-        if context_id == CPX_CALLBACKCONTEXT_CANDIDATE #&& time()-starting_time<maxTime+littleEp
+        if context_id == CPX_CALLBACKCONTEXT_CANDIDATE && time()-starting_time<maxTime+littleEp
             CPLEX.load_callback_variable_primal(cb_data, context_id)
             x_val = Array{Float64,2}(zeros(n,n))
             for i in 1:n
