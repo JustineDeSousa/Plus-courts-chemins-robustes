@@ -28,13 +28,13 @@ end
 
 
 #SAVING INSTANCES
-methods_ = ["dual", "callBack", "cuttingPlane" , "heuristic"]
+methods_ = ["callBack", "cuttingPlane" ]
 for meth in methods_
 	solve_instances(meth, 100.0)
 end
-performanceDiagram()
-resultsArrayGAP()
-best_solutions()
+#performanceDiagram()
+#resultsArrayGAP()
+#best_solutions()
 
 # println("Insert name of file to solve")
 # instance = readline(stdin)
