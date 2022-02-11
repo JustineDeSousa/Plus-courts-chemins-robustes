@@ -4,3 +4,4 @@
 deps/deps.jl
 *.gr
 instances/.directory
+instances/instance_test.txt
