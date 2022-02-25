@@ -163,47 +163,6 @@ function a_star_algorithm(inst::Instance, max_time::Float64)
 	return inst
 end
 
-function repare_poids!(inst::Instance)
-	"""
-	Calcul le pire des cas pour l'augmentation des poids des sommets sur le trajet solution
-	"""
-	model = Model(CPLEX.Optimizer)
-	set_silent(model)
-	@variable(model, poids[1:length(inst.path_)] >= 0)
-	@constraint(model, sum(poids) <= inst.d2)
-	@constraint(model, [k=1:length(inst.path_)], poids[k] <= 2 )
-	@objective(model, Max, sum(poids))
-	optimize!(model)
-	inst.poids = value.(poids)
-	if primal_status(model) == NO_SOLUTION
-		inst.diagnostic = "ROBUST_WEIGHTS_PB"
-		return false
-	else
-		return true
-	end
-end
-function repare_delta!(inst::Instance)
-	"""
-	Calcul le pire des cas pour l'augmentation de la durée des arcs sur le trajet solution
-	"""
-	arcs = [i for i in 1:length(inst.path_)-1]
-	sommets = [(inst.path_[i], inst.path_[i+1]) for i in 1:length(arcs)]
-	
-	model = Model(CPLEX.Optimizer)
-	set_silent(model)
-	@variable(model, delta[1:length(arcs)] >= 0)
-	@constraint(model, sum(delta) <= inst.d1)
-	@constraint(model, [k=1:length(arcs)], delta[k] <= inst.D[sommets[k][1], sommets[k][2]] )
-	@objective(model, Max, sum(delta))
-	optimize!(model)
-	inst.delta = value.(delta)
-	if primal_status(model) == NO_SOLUTION
-		inst.diagnostic = "ROBUST_DURATION_PB"
-		return false
-	else
-		return true
-	end
-end
 
 
 function heuristic(instance::String, max_time::Float64)
